@@ -1,3 +1,5 @@
+use crate::error::*;
+
 use crate::parser::*;
 
 use super::lexer::*;
@@ -9,16 +11,16 @@ fn test_lexer() {
     let mut tokens = Vec::new();
     loop {
         let token = lexer.next_token();
+        tokens.push(token.clone());
         if token == Token::EOF {
             break;
         }
-        tokens.push(token);
     }
     println!("{:?}", tokens);
 }
 
 #[test]
-fn test_parser() {
+fn test_parser() -> Result<(), error>{
     let input = "if (n == 1) y = 1";
     let mut lexer = Lexer::new(input);
     let mut tokens = Vec::new();
@@ -32,6 +34,7 @@ fn test_parser() {
 
     let mut parser = Parser::new(tokens);
 
-    let res = parser.parse();
+    let res = parser.parse()?;
     println!("{:?}",res);
+    Ok(())
 }

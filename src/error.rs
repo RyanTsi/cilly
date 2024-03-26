@@ -1,4 +1,5 @@
+#[derive(Debug)]
 pub enum error {
-    ParserError,
-    LexerError
+    ParserError(String),
+    LexerError(String)
 }
