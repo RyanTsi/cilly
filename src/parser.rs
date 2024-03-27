@@ -50,6 +50,7 @@ pub enum Atom {
     True,
     False,
     Expr(Box<Expr>),
+    String(String),
 }
 
 // 定义 Parser 结构体
@@ -117,7 +118,7 @@ impl Parser {
     fn is_at_end(&self) -> Result<bool, error> {
         match self.peek() {
             Some(Token::EOF) => Ok(true),
-            Some(tk) => Ok(false),
+            Some(_) => Ok(false),
             None => Err(error::ParserError("Unexpected end of input".to_string()))
         }
     }
@@ -168,7 +169,6 @@ impl Parser {
             _ => { Ok(Some(self.expr()?)) }
         }?;
         self.match_token(Token::Semicolon(";".to_string()));
-
         Ok(Statement::RetStat(expr))
     }
 
@@ -242,14 +242,12 @@ impl Parser {
         let id = self.consume_identifier()?;
         self.match_token(Token::Operator("(".to_string()));
         let params = match self.peek() {
-            Some(Token::Operator(ref op)) if op == ")" => Ok(Some(Box::new(self.params()?))),
-            None => Err(error::ParserError("Unexpected end of input".to_string())),
-            _ => Ok(None),
+            Some(Token::Operator(ref op)) if op == ")" => Ok(None),
+            None => Err(error::ParserError("Unexpected input in func".to_string())),
+            _ => Ok(Some(Box::new(self.params()?))),
         }?;
-    
         self.match_token(Token::Operator(")".to_string()));
         let body = self.block_stat()?;
-
         Ok(Statement::FuncStat(id, params, Box::new(body)))
     }
 
@@ -257,9 +255,9 @@ impl Parser {
         self.match_keyword("print");
         self.match_token(Token::Operator("(".to_string()));
         let args = match self.peek() {
-            Some(Token::Operator(ref op)) if op == ")" => Ok(Some(Box::new(self.args()?))),
-            None => Err(error::ParserError("Unexpected end of input".to_string())),
-            _ => Ok(None)
+            Some(Token::Operator(ref op)) if op == ")" => Ok(None),
+            None => Err(error::ParserError("Unexpected input in print".to_string())),
+            _ => Ok(Some(Box::new(self.args()?)))
         }?;
         self.match_token(Token::Operator(")".to_string()));
         self.match_token(Token::Semicolon(";".to_string()));
@@ -333,7 +331,12 @@ impl Parser {
                 self.match_token(Token::Operator(")".to_string()));
                 Ok(Atom::Expr(Box::new(res)))
             }
-            _ => Err(error::ParserError("Unexpected input".to_string()))
+            Some(Token::String(st)) => {
+                let res = st.clone();
+                self.next();
+                Ok(Atom::String(res))
+            },
+            _ => Err(error::ParserError("Unexpected input in atom".to_string()))
         }
     }
 

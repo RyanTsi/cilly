@@ -139,6 +139,7 @@ impl<'a> Lexer<'a> {
                     }
                     // string
                     '\"' => {
+                        self.next();
                         let start = self.position;
                         let mut end = start + 1;
                         while let Tag::CurChar(nc) = self.next() {
