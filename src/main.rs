@@ -1,8 +1,28 @@
 use cilly::{lexer::*, parser::*};
-
-fn main() {
+use cilly::error::Result;
+fn main() -> Result<()> {
     let test = 
     r#"
+    fun make_dog(){
+        var weight = 10;
+        fun eat(m){
+            weight = m + weight;        
+        }
+        fun get(){
+            return weight;
+        }
+        fun dispatch(m){
+            if(m == "eat"){
+                return eat;
+            } else if (m == "get"){
+                return get();
+            }
+        }
+        return dispatch;
+    }
+    "#;
+    
+    let input = r#"
     fun fact(n){
         if(n==0)
             return 1;
@@ -36,6 +56,7 @@ fn main() {
         return f0;
     }
     print(fib(10),"hello world");
+    
     fun make_count(n){
         fun inc(){
             n = n + 1;
@@ -43,42 +64,38 @@ fn main() {
         }
         return inc;
     }
+    fun make_dog(){
+        var weight = 10;
+        fun eat(m){
+            weight = m + weight;        
+        }
+        fun get(){
+            return weight;
+        }
+        fun dispatch(m){
+            if(m == "eat"){
+                return eat;
+            } else if (m == "get"){
+                return get();
+            }
+        }
+        return dispatch;
+    }
+    var dog = make_dog();
+    var eat = dog("eat");
+    eat(10);
     print(dog("get"));
+    eat(20);
     print(dog("get"));
     var c1 = make_count(1);
     var c2 = make_count(1);
+    print(c1(), c1(), c1(), c2());
     "#;
     
-    let input = r#"
-fun make_dog(){
-    var weight = 10;
-    fun eat(m){
-        weight = m + weight;        
-    }
-    fun get(){
-        return weight;
-    }
-    fun dispatch(m){
-        if(m == "eat"){
-            return eat;
-        } else if (m == "get"){
-            return get();
-        }
-    }
-    return dispatch;
-}
-var dog = make_dog();
-var eat = dog("eat");
-eat(10);
-eat(20);
-print(c1(), c1(), c1(), c2());
-print(2*10!);
-    "#;
-    
-    let mut lexer = Lexer::new(test);
+    let mut lexer = Lexer::new(input);
     let mut tokens = Vec::new();
     loop {
-        let token = lexer.next_token();
+        let token = lexer.next_token()?;
         tokens.push(token.clone());
         if token == Token::EOF {
             break;
@@ -87,6 +104,8 @@ print(2*10!);
     // println!("{:?}", tokens);
     let mut parser = Parser::new(tokens);
 
-    let res = parser.parse().unwrap();
+    let res = parser.parse()?;
     println!("{:?}",res);
+
+    Ok(())
 }
