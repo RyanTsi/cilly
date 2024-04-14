@@ -520,6 +520,4 @@ impl Parser {
     fn expr(&mut self) -> Result<Expr> {
         self.logic_or()
     }
-
-
 }

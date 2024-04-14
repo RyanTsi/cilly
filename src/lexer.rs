@@ -89,7 +89,7 @@ impl<'a> Lexer<'a> {
                         }
                         Ok(Token::Operator(op))
                     }
-                    // Delimiters
+                    // delimiters
                     '('|')' | '{'|'}' | '['|']' => {
                         self.next();
                         Ok(Token::Delimiters(c.to_string()))
