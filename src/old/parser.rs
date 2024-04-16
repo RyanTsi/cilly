@@ -1,5 +1,5 @@
 use crate::error::{Error, Result};
-use crate::lexer::Token;
+use super::lexer::Token;
 
 #[derive(Debug, PartialEq)]
 pub enum Node {
@@ -7,6 +7,7 @@ pub enum Node {
     Statement(Statement),
     Expr(Expr),
 }
+
 
 #[derive(Debug, PartialEq, Clone)]
 pub enum Expr {

@@ -1,0 +1,204 @@
+use::cilly::ast::*;
+
+// lalrpop 里的约定
+grammar;
+
+// 约束 lexer 的行为
+match {
+  // 跳过空白符和注释
+  r"\s*" => {},
+  r"//[^\n\r]*[\n\r]*" => {},
+  // 剩下的情况采用默认方式处理
+  _
+}
+
+pub CompUnit: CompUnit = <globaldefs: (GlobalDef)*> => CompUnit{ globaldefs };
+
+GlobalDef: GlobalDef = {
+  <funcdef: FuncDef> => GlobalDef::FuncDef(funcdef),
+  <decl: Decl> => GlobalDef::Decl(decl),
+}
+
+Decl: Decl = {
+  <var_decl: VarDecl> => Decl::VarDecl(var_decl),
+  <val_decl: ValDecl> => Decl::ValDecl(val_decl),
+}
+
+VarDecl: VarDecl = {
+  "var" <ident: Ident> "=" <initval: InitVal> ";" => VarDecl { ident, initval },
+}
+
+ValDecl: ValDecl = {
+  "val" <ident: Ident> "=" <initval: InitVal> ";" => ValDecl { ident, initval },
+}
+
+InitVal: InitVal = {
+  <exp: Exp> => InitVal{ exp },
+}
+
+FuncDef: FuncDef = {
+  "fn" <ident: Ident> "(" <funcfparams: (FuncFParams)?> ")" <block: Block> => FuncDef { ident, funcfparams ,block }
+}
+
+FuncFParams: FuncFParams = <param0: FuncFParam> <mut params: ("," <FuncFParam>)*> => {
+  params.insert(0, param0);
+  FuncFParams { params }
+};
+
+FuncRParams: FuncRParams = <param0: Exp> <mut params: ("," <Exp>)*> => {
+  params.insert(0, param0);
+  FuncRParams{ exps: params }
+};
+
+FuncFParam: FuncFParam = {
+  <ident: Ident> ":" <btype: BType> => FuncFParam {
+    ident, btype
+  }
+}
+
+BType: BType = {
+  "i32" => BType::I32,
+}
+
+Block: Block = "{" <items: (BlockItem)*> "}" => Block { items };
+
+BlockItem: BlockItem = {
+  <decl: Decl> => BlockItem::Decl(decl),
+  <stmt: Stmt> => BlockItem::Stmt(stmt),
+}
+
+Stmt: Stmt = {
+    MatchedStmt => <>,
+    OpenStmt => <>
+}
+
+// 能完全匹配到 else 的 if 语句 (嵌套在 if 里面的语句中的 if 也需要匹配到 else)
+// 或者其他的非条件语句
+MatchedStmt: Stmt = {
+    "if" "(" <condition: Exp> ")" <then_branch: MatchedStmt> "else" <else_branch: MatchedStmt> => Stmt::If {
+        condition,
+        then_branch: Box::new(then_branch),
+        else_branch: Some(Box::new(else_branch))
+      },
+    "while" "(" <condition: Exp> ")" <loopbody: MatchedStmt> => Stmt::While { condition, loopbody: Box::new(loopbody) },
+    <lval: LVal> "=" <exp: Exp> ";" => Stmt::Assign(lval, exp),
+    <exp: (Exp)?> ";" => Stmt::Exp(exp),
+    <block: Block> => Stmt::Block(block),
+    <funcdef: FuncDef> => Stmt::FuncDef(funcdef),
+}
+
+// 不能完全匹配到 else 的 if 语句
+OpenStmt: Stmt = {
+    // 匹配不到 else 的语句 那么 then_branch 里面是不是 MatchedStmt 都无所谓了
+    "if" "(" <condition: Exp> ")" <then_branch: Stmt> => Stmt::If {
+        condition,
+        then_branch: Box::new(then_branch),
+        else_branch: None
+      },
+    // 匹配得到 else 的语句 既然能匹配到 else 那么 then_branch 就必须是一个 MatchedStmt
+    // else 块里的语句就必须是 OpenStmt 了，因为如果是 MatchedStmt 的话这个语句就也应算作 MatchedStmt 了
+    "if" "(" <condition: Exp> ")" <then_branch: MatchedStmt> "else" <else_branch: OpenStmt> => Stmt::If {
+        condition, 
+        then_branch: Box::new(then_branch),
+        else_branch: Some(Box::new(else_branch))
+      },
+    "while" "(" <condition: Exp> ")" <loopbody: OpenStmt> => Stmt::While { condition, loopbody: Box::new(loopbody) },
+    "break" ";" => Stmt::Break,
+    "continue" ";" => Stmt::Continue,
+    "return" <exp: (Exp)?> ";" => Stmt::Ret(exp),
+}
+
+LVal: LVal = {
+  <ident: Ident> => LVal{ ident },
+}
+
+
+// 如果匹配到标识符, 就返回这个字符串
+// 一对尖括号在此处指代的是正则表达式匹配到的字符串 (&str)
+// 关于尖括号到底代表什么, 请 RTFM
+Ident: String = r"[_a-zA-Z][_a-zA-Z0-9]*" => <>.to_string();
+
+
+Number: i32 = <num: IntConst> => num;
+// 对整数字面量的处理方式: 把匹配到的字符串按对应进制转换成数字
+IntConst: i32 = {
+  r"[1-9][0-9]*" => i32::from_str_radix(<>, 10).unwrap(),
+  r"0[0-7]*" => i32::from_str_radix(<>, 8).unwrap(),
+  r"0[xX][0-9a-fA-F]+" => i32::from_str_radix(&<>[2..], 16).unwrap(),
+}
+
+Exp: Exp = {
+  <lor_exp: LOrExp> => Exp { lor_exp },
+}
+
+PrimaryExp: PrimaryExp = {
+   "(" <exp: Exp> ")" => PrimaryExp::Exp(Box::new(exp)),
+   <num: Number> => PrimaryExp::Number(num),
+   <lval: LVal> => PrimaryExp::LVal(lval),
+}
+
+LOrExp: LOrExp = {
+  <and: LAndExp> => LOrExp::And(and),
+  <or: LOrExp> "||" <and: LAndExp> => LOrExp::Or(Box::new(or), and),
+}
+
+LAndExp: LAndExp = {
+  <eq: EqExp> => LAndExp::Eq(eq),
+  <and: LAndExp> "&&" <eq: EqExp> => LAndExp::And(Box::new(and), eq),
+}
+
+EqOrNEqOp: BinaryOp = {
+    "==" => BinaryOp::Eq,
+    "!=" => BinaryOp::Neq
+}
+
+CompareOp: BinaryOp = {
+    "<"  => BinaryOp::Lt,
+    ">"  => BinaryOp::Gt,
+    "<=" => BinaryOp::Leq,
+    ">=" => BinaryOp::Geq,
+}
+
+AddOrSubOP: BinaryOp = {
+    "+" => BinaryOp::Add,
+    "-" => BinaryOp::Sub,
+}
+
+MulOrDivOrModOP: BinaryOp = {
+    "*" => BinaryOp::Mul,
+    "/" => BinaryOp::Div,
+    "%" => BinaryOp::Mod,
+}
+
+
+// EqExp ::= RelExp | EqExp ("==" | "!=") RelExp;
+EqExp: EqExp = {
+    <rel: RelExp> => EqExp::Rel(rel),
+    <eq: EqExp> <op: EqOrNEqOp> <rel: RelExp> => EqExp::Eq(Box::new(eq), op, rel)
+}
+
+RelExp: RelExp = {
+    <add: AddExp> => RelExp::Add(add),
+    <rel: RelExp> <op: CompareOp> <add: AddExp> => RelExp::Rel(Box::new(rel), op, add),
+}
+
+AddExp: AddExp = {
+    <mul: MulExp> => AddExp::Mul(mul),
+    <add: AddExp> <op: AddOrSubOP> <mul: MulExp> => AddExp::Add(Box::new(add), op, mul),
+}
+
+MulExp: MulExp = {
+    <unary: UnaryExp> => MulExp::Unary(unary),
+    <mul: MulExp> <op: MulOrDivOrModOP> <unary: UnaryExp> => MulExp::Mul(Box::new(mul), op, unary),
+}
+
+UnaryOp: UnaryOp = {
+    "-" => UnaryOp::Neg,
+    "!" => UnaryOp::Not,
+}
+
+UnaryExp: UnaryExp = {
+    <pri: PrimaryExp> => UnaryExp::Pri(pri),
+    <op: UnaryOp> <unary: UnaryExp> => UnaryExp::Unary(op, Box::new(unary)),
+    <ident: Ident> "(" <funcrparams: (FuncRParams)?> ")" => UnaryExp::FuncCall{ ident, funcrparams },
+}

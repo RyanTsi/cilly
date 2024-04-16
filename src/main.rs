@@ -1,111 +1,28 @@
-use cilly::{lexer::*, parser::*};
-use cilly::error::Result;
+use lalrpop_util::lalrpop_mod;
+use std::env::args;
+use std::fs::read_to_string;
+use std::io::Result;
+
+// 引用 lalrpop 生成的解析器
+// 因为我们刚刚创建了 sysy.lalrpop, 所以模块名是 sysy
+lalrpop_mod!(pub cy);
+
 fn main() -> Result<()> {
-    let test = 
-    r#"
-    fun make_dog(){
-        var weight = 10;
-        fun eat(m){
-            weight = m + weight;        
-        }
-        fun get(){
-            return weight;
-        }
-        fun dispatch(m){
-            if(m == "eat"){
-                return eat;
-            } else if (m == "get"){
-                return get();
-            }
-        }
-        return dispatch;
-    }
-    "#;
-    
-    let input = r#"
-    fun fact(n){
-        if(n==0)
-            return 1;
-        else
-            return n * fact(n-1);
-    }
-    print(fact(10));
-    fun k(x){
-        fun ky(y){
-            return x + y;
-        }
-        return ky;
-    }
-    var ky = k(3);
-    print(ky(5));
-    fun fib0(n){
-        if(n < 2)
-            return n;
-        else
-            return fib0(n-1) + fib0(n-2);
-    }
-    fun fib(n){
-        var f0 = 0;
-        var f1 = 1;
-        while(n > 0){
-            var t = f1;
-            f1 = f0 + f1;
-            f0 = t;
-            n = n - 1;
-        }
-        return f0;
-    }
-    print(fib(10),"hello world");
-    
-    fun make_count(n){
-        fun inc(){
-            n = n + 1;
-            return n;
-        }
-        return inc;
-    }
-    fun make_dog(){
-        var weight = 10;
-        fun eat(m){
-            weight = m + weight;        
-        }
-        fun get(){
-            return weight;
-        }
-        fun dispatch(m){
-            if(m == "eat"){
-                return eat;
-            } else if (m == "get"){
-                return get();
-            }
-        }
-        return dispatch;
-    }
-    var dog = make_dog();
-    var eat = dog("eat");
-    eat(10);
-    print(dog("get"));
-    eat(20);
-    print(dog("get"));
-    var c1 = make_count(1);
-    var c2 = make_count(1);
-    print(c1(), c1(), c1(), c2());
-    "#;
-    
-    let mut lexer = Lexer::new(input);
-    let mut tokens = Vec::new();
-    loop {
-        let token = lexer.next_token()?;
-        tokens.push(token.clone());
-        if token == Token::EOF {
-            break;
-        }
-    }
-    // println!("{:?}", tokens);
-    let mut parser = Parser::new(tokens);
+    // 解析命令行参数
+    let mut args = args();
+    args.next();
+    let input = args.next().unwrap();
+    args.next();
+    let output = args.next().unwrap();
 
-    let res = parser.parse()?;
-    println!("{:?}",res);
+    // 读取输入文件
+    let input = read_to_string(input)?;
 
+    // 调用 lalrpop 生成的 parser 解析输入文件
+    let ast = cy::CompUnitParser::new().parse(&input).unwrap();
+
+    // 输出解析得到的 AST
+    // println!("{:#?}", ast);
+    println!("{:?}", ast);
     Ok(())
 }

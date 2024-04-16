@@ -1,5 +1,5 @@
-pub mod lexer;
-pub mod parser;
+pub mod old;
 pub mod error;
+pub mod ast;
+// pub mod interpreter;
 
-mod test;
