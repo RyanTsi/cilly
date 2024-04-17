@@ -44,12 +44,13 @@ impl Execute for Decl {
 //     Ok(())
 // }
 
-impl<'ast> Execute for ValDecl {
-    fn run(&'ast self, env: &mut Environment<'ast>) -> Result<()> {
+impl<'a> Execute for ValDecl {
+    fn run(&self, env: &'a mut Environment<'a>) -> Result<()> {
         env.new_value(&self.ident, Value::new(true, Type::from(self.initval.eval(env))))?;
         Ok(())
     }
 }
+
 
 impl Execute for VarDecl {
     fn run(&self, env: &mut Environment) -> Result<()> {
