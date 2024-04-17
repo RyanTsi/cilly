@@ -25,11 +25,11 @@ Decl: Decl = {
 }
 
 VarDecl: VarDecl = {
-  "var" <ident: Ident> "=" <initval: InitVal> ";" => VarDecl { ident, initval },
+  "var" <ident: Ident> ":" <btype: BType> "=" <initval: InitVal> ";" => VarDecl { ident, btype, initval },
 }
 
 ValDecl: ValDecl = {
-  "val" <ident: Ident> "=" <initval: InitVal> ";" => ValDecl { ident, initval },
+  "val" <ident: Ident> ":" <btype: BType> "=" <initval: InitVal> ";" => ValDecl { ident, btype, initval },
 }
 
 InitVal: InitVal = {
@@ -37,7 +37,24 @@ InitVal: InitVal = {
 }
 
 FuncDef: FuncDef = {
-  "fn" <ident: Ident> "(" <funcfparams: (FuncFParams)?> ")" <block: Block> => FuncDef { ident, funcfparams ,block }
+  MatchedFuncDef => <>,
+  VoidFuncDef => <>,
+}
+
+MatchedFuncDef: FuncDef = {
+  "fn" <ident: Ident> "(" <funcfparams: (FuncFParams)?> ")" "->" <btype: BType> <block: Block> => FuncDef {
+    ident,
+    btype: Some(btype),
+    funcfparams,
+    block }
+}
+
+VoidFuncDef: FuncDef = {
+  "fn" <ident: Ident> "(" <funcfparams: (FuncFParams)?> ")" <block: Block> => FuncDef {
+    ident,
+    btype: None,
+    funcfparams,
+    block }
 }
 
 FuncFParams: FuncFParams = <param0: FuncFParam> <mut params: ("," <FuncFParam>)*> => {

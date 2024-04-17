@@ -9,4 +9,7 @@ pub enum Error {
     ParserUnexpectedEnd,
     ParserUnexpectedMatch(String),
     InterpreterError(String),
+    DuplicatedDef,
+    SymbolNotFound,
+    CallError,
 }

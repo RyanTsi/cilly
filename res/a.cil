@@ -1,4 +1,4 @@
-fn abs(a: i32) {
+fn abs(a: i32) -> i32 {
     fn b(x : i32) {
         return a + b;
     }
@@ -12,9 +12,6 @@ fn feb(n: i32) {
     return n * feb(n - 1);
 }
 
-fn main () {
-    val a = abs(1);
-    val b = a(1);
-    val res = feb(10);
-    return 0;
-}
+val a: i32 = abs(1);
+val b: i32 = a(1);
+val res: i32 = feb(10);

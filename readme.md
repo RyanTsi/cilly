@@ -36,11 +36,11 @@ CompUnit        ::= [CompUnit] (FuncDef | Decl);
 
 Decl            ::= ValDecl | VarDecl;
 
-ValDecl         ::= "val" IDENT "=" InitVal ";";
-VarDecl         ::= "var" IDENT "=" InitVal ";";
+ValDecl         ::= "val" IDENT "->" BType "=" InitVal ";";
+VarDecl         ::= "var" IDENT "->" BType "=" InitVal ";";
 InitVal         ::= Exp;
 
-FuncDef         ::= FuncType IDENT "(" [FuncFParams] ")" Block;
+FuncDef         ::= FuncType IDENT "(" [FuncFParams] ")" [":" BType] Block;
 FuncFParams     ::= FuncFParam {"," FuncFParam};
 FuncFParam      ::= IDENT ":" BType;
 FuncRParams     ::= Exp {"," Exp};

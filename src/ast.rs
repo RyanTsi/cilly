@@ -19,12 +19,14 @@ pub enum Decl {
 #[derive(Debug)]
 pub struct VarDecl {
     pub ident: String,
+    pub btype: BType,
     pub initval: InitVal,
 }
 
 #[derive(Debug)]
 pub struct ValDecl {
     pub ident: String,
+    pub btype: BType,
     pub initval: InitVal,
 }
 
@@ -36,6 +38,7 @@ pub struct InitVal {
 #[derive(Debug)]
 pub struct FuncDef {
     pub ident: String,
+    pub btype: Option<BType>,
     pub funcfparams: Option<FuncFParams>,
     pub block: Block,
 }
