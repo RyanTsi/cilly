@@ -60,13 +60,13 @@ impl<'ast> Execute<'ast> for BlockItem {
 }
 
 pub enum Label {
+    Type(Option<Type>),
     Continue,
     Break,
-    Type(Type),
 }
 
-impl From<Type> for Label {
-    fn from(value: Type) -> Self {
+impl From<Option<Type>> for Label {
+    fn from(value: Option<Type>) -> Self {
         Self::Type(value)
     }
 }
@@ -75,12 +75,15 @@ impl<'ast> Execute<'ast> for Stmt {
     fn run(&'ast self, env: &mut Environment<'ast>) -> Result<Option<Label>> {
         match &self {
             Stmt::Assign(lval, exp) => {
-                env.new_value(&lval.ident, Value::new(false, Type::from(exp.eval(env))))?;
+                env.update_value(&lval.ident, Value::new(false, Type::from(exp.eval(env))))?;
+                println!("{:?}", env.value(&lval.ident)?)
             }
             Stmt::Block(block) => {
                 env.enter();
                 for item in &block.items {
-                    item.run(env)?;
+                    if let Some(label) = item.run(env)? {
+                        return Ok(Some(label));
+                    }                    
                 }
                 env.exit();
             }
@@ -91,41 +94,42 @@ impl<'ast> Execute<'ast> for Stmt {
             }
             Stmt::Ret(exp) => {
                 if let Some(exp) = exp {
-                    return Ok(Some(Label::Type(Type::from(exp.eval(env)))))
+                    return Ok(Some(Label::Type(Some(Type::from(exp.eval(env))))))
                 } else {
-                    return Ok(None);
+                    return Ok(Some(Label::Type(None)));
                 }
             },
             Stmt::If { condition, then_branch, else_branch } => {
                 if let Some(condition) = condition.eval(env) {
                     if condition != 0 {
-                        then_branch.run(env)?;
+                        if let Some(label) = then_branch.run(env)? {
+                            return Ok(Some(label));
+                        }                        
                     } else {
                         if let Some(else_branch) = else_branch {
-                            else_branch.run(env)?;
+                            if let Some(label) = else_branch.run(env)? {
+                                return Ok(Some(label));
+                            }
                         }
                     }
                 } else {
                     return Err(Error::MissingExpression);
                 }
             },
-            Stmt::While { condition, loopbody } => {
-                loop {
-                    if let Some(condition) = condition.eval(env) {
-                        if condition == 0 {
-                            break;
-                        } else {
-                            loopbody.run(env)?;
-                        }
-                    } else {
-                        return Err(Error::MissingExpression);
-                    }
-                }
-            }
-            Stmt::FuncDef(_) => todo!(),
-            Stmt::Continue => todo!(),
-            Stmt::Break => todo!(),
-        }
+            Stmt::While {..} => {
+                env.push_loop(self)?;
+            },
+            Stmt::FuncDef(_) => {
+                todo!()
+            },
+            Stmt::Continue => {
+                return Ok(Some(Label::Continue));
+            },
+            Stmt::Break => {
+                env.pop_loop()?;
+                return Ok(Some(Label::Break));
+            },
+        };
         Ok(None)
     }
 }

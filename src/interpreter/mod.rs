@@ -3,7 +3,7 @@ use crate::error::Result;
 use self::{environment::Environment, run::Label};
 
 mod eval;
-mod environment;
+pub mod environment;
 mod values;
 mod func;
 pub mod run;

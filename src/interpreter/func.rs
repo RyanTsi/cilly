@@ -1,6 +1,7 @@
 use crate::{ast::{BType, Block, BlockItem, Decl, FuncDef, FuncFParams, FuncRParams, Stmt}, error::{Error, Result}, interpreter::eval::Evaluate};
 
-use super::{environment::Environment, values::{Type, Value}, Execute};
+use super::{environment::Environment, run::Label, values::{Type, Value}, Execute};
+
 
 
 impl<'ast> FuncDef {
@@ -18,18 +19,21 @@ impl<'ast> FuncDef {
                 }
             }
         }
-        let mut curitem_ith = 0;
-        while curitem_ith < self.block.items.len() {
-            let item = &self.block.items[curitem_ith];
+        for item in &self.block.items {
             match item {
                 BlockItem::Decl(decl) => {
                     decl.run(env)?;
                 }
                 BlockItem::Stmt(stmt) => {
-                    
+                    if let Some(Label::Type(ret)) = stmt.run(env)? {
+                        return match ret {
+                            None => Ok(None),
+                            Some(typ) => Ok(Some(Value::new(true, typ))),
+                        }
+                    }
                 }
             }
-            curitem_ith += 1;
+            env.run_loop()?;
         }
         env.exit();
         Ok(None)

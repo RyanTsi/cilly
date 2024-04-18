@@ -1,0 +1,9 @@
+fn main() {
+    var a: i32 = 1;
+    val b: i32 = 2;
+    while(a + b <= 5) {
+        a = a + 1;
+        val res: i32 = 1 + 2;
+    }
+    print(a);
+}

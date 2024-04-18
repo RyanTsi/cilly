@@ -1,8 +1,10 @@
+#[derive(Debug)]
 pub enum Value {
     Const(Type),
     Var(Type),
 }
 
+#[derive(Debug)]
 pub enum Type {
     I32(i32),
 }
@@ -26,3 +28,4 @@ impl From<Option<i32>> for Type {
         }
     }
 }
+
