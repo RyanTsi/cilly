@@ -11,5 +11,6 @@ pub enum Error {
     InterpreterError(String),
     DuplicatedDef,
     SymbolNotFound,
-    CallError,
+    CallError(String),
+    MissingExpression,
 }

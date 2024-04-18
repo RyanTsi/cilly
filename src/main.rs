@@ -1,5 +1,4 @@
 use cilly::error::Result;
-use cilly::interpreter::run::Interpreter;
 use lalrpop_util::lalrpop_mod;
 use std::env::args;
 use std::fs::read_to_string;
@@ -22,7 +21,6 @@ fn main() -> Result<()> {
     // 调用 lalrpop 生成的 parser 解析输入文件
     let ast = cy::CompUnitParser::new().parse(&input).unwrap();
 
-    let x = Interpreter::run(&ast)?;
     // 输出解析得到的 AST
     // println!("{:#?}", ast);
     Ok(())

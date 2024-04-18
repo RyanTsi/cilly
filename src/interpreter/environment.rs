@@ -1,12 +1,13 @@
 use std::collections::HashMap;
 
-use crate::error::{Error, Result};
+use crate::{ast::{FuncDef, FuncRParams}, error::{Error, Result}};
 
-use super::{func::Function, values::Value};
+use super::values::Value;
 
 pub struct Environment<'ast> {
-    funcs: HashMap<&'ast str, Function>,
+    funcs: HashMap<&'ast str, &'ast FuncDef>,
     values: Vec<HashMap<&'ast str, Value>>,
+    stack: Vec<&'ast FuncDef>,
 }
 
 impl<'ast> Environment<'ast> {
@@ -14,6 +15,7 @@ impl<'ast> Environment<'ast> {
         Self {
             funcs: HashMap::new(),
             values: vec![HashMap::new()],
+            stack: Vec::new(),
         }
     }
     pub fn new_value(&mut self, ident: &'ast str, v: Value) -> Result<()> {
@@ -24,7 +26,7 @@ impl<'ast> Environment<'ast> {
         cur.insert(ident, v);
         Ok(())
     }
-    pub fn new_func(&mut self, ident: &'ast str, func: Function) -> Result<()> {
+    pub fn new_func(&mut self, ident: &'ast str, func: &'ast FuncDef) -> Result<()> {
         if self.funcs.contains_key(ident) {
             return Err(Error::DuplicatedDef);
         }
@@ -41,7 +43,7 @@ impl<'ast> Environment<'ast> {
         }
         Err(Error::SymbolNotFound)
     }
-    pub fn func(&self, ident: &'ast str) -> Result<&Function> {
+    pub fn func(&self, ident: &'ast str) -> Result<&'ast FuncDef> {
         if let Some(func) = self.funcs.get(ident) {
             return Ok(func);
         }
@@ -52,5 +54,18 @@ impl<'ast> Environment<'ast> {
     }
     pub fn exit(&mut self) {
         self.values.pop();
+    }
+    pub fn push_func(&mut self, ident: &'ast str) -> Result<()> {
+        self.stack.push(self.func(ident)?);
+        Ok(())
+    }
+    pub fn pop_func(&mut self) -> Result<()> {
+        self.stack.pop();
+        Ok(())
+    }
+    pub fn call_func(&mut self, params: &Option<FuncRParams> ) -> Result<()> {
+        let curfunc = self.stack.last().unwrap();
+        curfunc.call(params, self)?;
+        Ok(())
     }
 }

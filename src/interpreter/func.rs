@@ -1,30 +1,15 @@
-use crate::{ast::{BType, Block, BlockItem, Decl, FuncDef, FuncFParams, FuncRParams}, error::{Error, Result}, interpreter::eval::Evaluate};
+use crate::{ast::{BType, Block, BlockItem, Decl, FuncDef, FuncFParams, FuncRParams, Stmt}, error::{Error, Result}, interpreter::eval::Evaluate};
 
-use super::{environment::Environment, values::{Type, Value}};
+use super::{environment::Environment, values::{Type, Value}, Execute};
 
-pub struct Function {
-    ret: Option<BType>,
-    params: Option<FuncFParams>,
-    block: Block,
-}
 
-impl From<FuncDef> for Function {
-    fn from(func: FuncDef) -> Self {
-        Self {
-            ret: func.btype,
-            params: func.funcfparams,
-            block: func.block,
-        }
-    }
-}
-
-impl<'ast> Function {
-    fn call(&'ast self, params: &Option<FuncRParams>, env: &mut Environment<'ast>) -> Result<Option<Value>> {
+impl<'ast> FuncDef {
+    pub fn call(&'ast self, params: &Option<FuncRParams>, env: &mut Environment<'ast>) -> Result<Option<Value>> {
         env.enter();
-        if let (Some(Rparams), Some(Lparams)) = (params, &self.params) {
+        if let (Some(Rparams), Some(Lparams)) = (params, &self.funcfparams) {
             let len = Rparams.exps.len();
             if (Lparams.params.len() != len) || Lparams.params.len() == 0 {
-                return Err(Error::CallError);
+                return Err(Error::CallError(format!("in function: {}", self.ident)));
             } else {
                 for (param, exp) in Lparams.params.iter().zip(&Rparams.exps) {
                     let id = &param.ident;
@@ -33,23 +18,20 @@ impl<'ast> Function {
                 }
             }
         }
-        for item in &self.block.items {
-
+        let mut curitem_ith = 0;
+        while curitem_ith < self.block.items.len() {
+            let item = &self.block.items[curitem_ith];
+            match item {
+                BlockItem::Decl(decl) => {
+                    decl.run(env)?;
+                }
+                BlockItem::Stmt(stmt) => {
+                    
+                }
+            }
+            curitem_ith += 1;
         }
         env.exit();
-        todo!()
-    }
-}
-
-impl BlockItem {
-    fn execute(&self, env: &Environment) {
-        match &self {
-            BlockItem::Decl(decl) => {
-                
-            }
-            BlockItem::Stmt(stmt) => {
-
-            }
-        }
+        Ok(None)
     }
 }
