@@ -12,6 +12,7 @@ impl<'ast> Execute<'ast> for CompUnit {
         }
         if let Ok(_) = env.push_func("main") {
             env.call_func(&None)?;
+            // println!("{:?}", env.values);
             env.pop_func()?;
         }
         Ok(None)
@@ -24,20 +25,24 @@ impl<'ast> Execute<'ast> for Decl {
             Decl::ValDecl(decl) => decl.run(env)?,
             Decl::VarDecl(decl) => decl.run(env)?,
         };
+
+        println!("{:?}", env.values);
         Ok(None)
     }
 }
 
 impl<'ast> Execute<'ast> for ValDecl {
     fn run(&'ast self, env: &mut Environment<'ast>) -> Result<Option<Label>> {
-        env.new_value(&self.ident, Value::new(true, Type::from(self.initval.eval(env))))?;
+        let val = Type::from(self.initval.eval(env));
+        env.new_value(&self.ident, Value::new(true, val))?;
         Ok(None)
     }
 }
 
 impl<'ast> Execute<'ast> for VarDecl {
     fn run(&'ast self, env: &mut Environment<'ast>) -> Result<Option<Label>> {
-        env.new_value(&self.ident, Value::new(false, Type::from(self.initval.eval(env))))?;
+        let val = Type::from(self.initval.eval(env));
+        env.new_value(&self.ident, Value::new(false, val))?;
         Ok(None)
     }
 }
@@ -75,8 +80,9 @@ impl<'ast> Execute<'ast> for Stmt {
     fn run(&'ast self, env: &mut Environment<'ast>) -> Result<Option<Label>> {
         match &self {
             Stmt::Assign(lval, exp) => {
-                env.update_value(&lval.ident, Value::new(false, Type::from(exp.eval(env))))?;
-                println!("{:?}", env.value(&lval.ident)?)
+                let val = Type::from(exp.eval(env));
+                env.update_value(&lval.ident, Value::new(false, val))?;
+                // println!("{:?}", env.value(&lval.ident)?)
             }
             Stmt::Block(block) => {
                 env.enter();

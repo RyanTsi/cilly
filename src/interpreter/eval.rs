@@ -6,24 +6,24 @@ use crate::ast::{AddExp, BinaryOp, EqExp, Exp, InitVal, LAndExp, LOrExp, LVal, M
 
 use super::{environment::Environment, values::{Type, Value}};
 
-pub trait Evaluate {
-    fn eval(&self, env: &Environment) -> Option<i32>;
+pub trait Evaluate<'ast> {
+    fn eval(&'ast self, env: &mut Environment<'ast>) -> Option<i32>;
 }
 
-impl Evaluate for Exp {
-    fn eval(&self, env: &Environment) -> Option<i32> {
+impl<'ast> Evaluate<'ast> for Exp {
+    fn eval(&'ast self, env: &mut Environment<'ast>) -> Option<i32> {
         self.lor_exp.eval(env)
     }
 }
 
-impl Evaluate for InitVal {
-    fn eval(&self, env: &Environment) -> Option<i32> {
+impl<'ast> Evaluate<'ast> for InitVal {
+    fn eval(&'ast self, env: &mut Environment<'ast>) -> Option<i32> {
         self.exp.eval(env)
     }
 }
 
-impl Evaluate for LOrExp {
-    fn eval(&self, env: &Environment) -> Option<i32> {
+impl<'ast> Evaluate<'ast> for LOrExp {
+    fn eval(&'ast self, env: &mut Environment<'ast>) -> Option<i32> {
         match &self {
             LOrExp::And(and) => and.eval(env),
             LOrExp::Or(lhs, rhs) => {
@@ -38,8 +38,8 @@ impl Evaluate for LOrExp {
     }
 }
 
-impl Evaluate for LAndExp {
-    fn eval(&self, env: &Environment) -> Option<i32> {
+impl<'ast> Evaluate<'ast> for LAndExp {
+    fn eval(&'ast self, env: &mut Environment<'ast>) -> Option<i32> {
         match &self {
             LAndExp::Eq(eq) => eq.eval(env),
             LAndExp::And(lhs, rhs) => {
@@ -54,8 +54,8 @@ impl Evaluate for LAndExp {
     }
 }
 
-impl Evaluate for EqExp {
-    fn eval(&self, env: &Environment) -> Option<i32> {
+impl<'ast> Evaluate<'ast> for EqExp {
+    fn eval(&'ast self, env: &mut Environment<'ast>) -> Option<i32> {
         match &self {
             EqExp::Rel(rel) => rel.eval(env),
             EqExp::Eq(lhs, op, rhs) => {
@@ -74,8 +74,8 @@ impl Evaluate for EqExp {
     }
 }
 
-impl Evaluate for RelExp {
-    fn eval(&self, env: &Environment) -> Option<i32> {
+impl<'ast> Evaluate<'ast> for RelExp {
+    fn eval(&'ast self, env: &mut Environment<'ast>) -> Option<i32> {
         match &self {
             RelExp::Add(add) => add.eval(env),
             RelExp::Rel(lhs, op, rhs) => {
@@ -96,8 +96,8 @@ impl Evaluate for RelExp {
     }
 }
 
-impl Evaluate for AddExp {
-    fn eval(&self, env: &Environment) -> Option<i32> {
+impl<'ast> Evaluate<'ast> for AddExp {
+    fn eval(&'ast self, env: &mut Environment<'ast>) -> Option<i32> {
         match &self {
             AddExp::Mul(mul) => mul.eval(env),
             AddExp::Add(lhs, op, rhs) => {
@@ -116,8 +116,8 @@ impl Evaluate for AddExp {
     }
 }
 
-impl Evaluate for MulExp {
-    fn eval(&self, env: &Environment) -> Option<i32> {
+impl<'ast> Evaluate<'ast> for MulExp {
+    fn eval(&'ast self, env: &mut Environment<'ast>) -> Option<i32> {
         match &self {
             MulExp::Unary(unary) => unary.eval(env),
             MulExp::Mul(lhs, op, rhs) => {
@@ -137,8 +137,8 @@ impl Evaluate for MulExp {
     }
 }
 
-impl Evaluate for UnaryExp {
-    fn eval(&self, env: &Environment) -> Option<i32> {
+impl<'ast> Evaluate<'ast> for UnaryExp {
+    fn eval(&'ast self, env: &mut Environment<'ast>) -> Option<i32> {
         match &self {
             UnaryExp::Pri(pri) => pri.eval(env),
             UnaryExp::Unary(op, unary) => 
@@ -146,13 +146,24 @@ impl Evaluate for UnaryExp {
                     UnaryOp::Neg => -exp,
                     UnaryOp::Not => (exp == 0) as i32,
                 }),
-            UnaryExp::FuncCall { ident, funcrparams } => None,
+            UnaryExp::FuncCall { ident, funcrparams } => {
+                env.push_func(&ident).ok();
+                // println!("{:?}", funcrparams);
+                let x = env.call_func(funcrparams).ok();
+                env.pop_func().ok();
+                if let Some(Some(Value::Const(Type::I32(x)))) = x {
+                    // println!("{}", x);
+                    Some(x)
+                } else {
+                    None
+                }
+            }
         }
     }
 }
 
-impl Evaluate for PrimaryExp {
-    fn eval(&self, env: &Environment) -> Option<i32> {
+impl<'ast> Evaluate<'ast> for PrimaryExp {
+    fn eval(&'ast self, env: &mut Environment<'ast>) -> Option<i32> {
         match &self {
             PrimaryExp::Exp(exp) => exp.eval(env),
             PrimaryExp::Number(num) => Some(num.to_owned()) ,
@@ -161,8 +172,8 @@ impl Evaluate for PrimaryExp {
     }
 }
 
-impl Evaluate for LVal {
-    fn eval(&self, env: &Environment) -> Option<i32> {
+impl<'ast> Evaluate<'ast> for LVal {
+    fn eval(&'ast self, env: &mut Environment<'ast>) -> Option<i32> {
         let val = env.value(&self.ident).ok()?;
         match val {
             Value::Const(Type::I32(v)) => Some(v.to_owned()),

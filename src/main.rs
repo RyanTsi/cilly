@@ -30,12 +30,12 @@ fn main() -> Result<()> {
 
 fn testcode() -> &'static str {
     r#"
+fn feb(n: i32) -> i32 {
+    if(n == 0) return 1;
+    return feb(n - 1) * n;
+}
 fn main() {
-    var a: i32 = 1;
-    while(a < 5) {
-        a = a + 1;
-        val res: i32 = 1 + 2;
-    }
+    val x: i32 = feb(2);
 }
     "#
 }

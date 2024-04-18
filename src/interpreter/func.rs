@@ -5,8 +5,9 @@ use super::{environment::Environment, run::Label, values::{Type, Value}, Execute
 
 
 impl<'ast> FuncDef {
-    pub fn call(&'ast self, params: &Option<FuncRParams>, env: &mut Environment<'ast>) -> Result<Option<Value>> {
+    pub fn call(&'ast self, params: &'ast Option<FuncRParams>, env: &mut Environment<'ast>) -> Result<Option<Value>> {
         env.enter();
+        let mut res = Ok(None);
         if let (Some(Rparams), Some(Lparams)) = (params, &self.funcfparams) {
             let len = Rparams.exps.len();
             if (Lparams.params.len() != len) || Lparams.params.len() == 0 {
@@ -19,6 +20,7 @@ impl<'ast> FuncDef {
                 }
             }
         }
+        // println!("{:#?}", env.values);
         for item in &self.block.items {
             match item {
                 BlockItem::Decl(decl) => {
@@ -26,16 +28,17 @@ impl<'ast> FuncDef {
                 }
                 BlockItem::Stmt(stmt) => {
                     if let Some(Label::Type(ret)) = stmt.run(env)? {
-                        return match ret {
+                        res = match ret {
                             None => Ok(None),
                             Some(typ) => Ok(Some(Value::new(true, typ))),
-                        }
+                        };
+                        break;
                     }
                 }
             }
             env.run_loop()?;
         }
         env.exit();
-        Ok(None)
+        res
     }
 }

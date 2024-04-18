@@ -4,13 +4,14 @@
 
 use std::collections::HashMap;
 
-use crate::{ast::{BlockItem, FuncDef, FuncRParams, Stmt}, error::{Error, Result}};
+use crate::{ast::{FuncDef, FuncRParams, Stmt}, error::{Error, Result}};
 
 use super::{eval::Evaluate, values::Value, Execute};
 
+#[derive(Debug)]
 pub struct Environment<'ast> {
     funcs: HashMap<&'ast str, &'ast FuncDef>,
-    values: Vec<HashMap<&'ast str, Value>>,
+    pub values: Vec<HashMap<&'ast str, Value>>,
     stack: Vec<(&'ast FuncDef, Vec<&'ast Stmt>)>,
 }
 
@@ -76,10 +77,9 @@ impl<'ast> Environment<'ast> {
         self.stack.pop();
         Ok(())
     }
-    pub fn call_func(&mut self, params: &Option<FuncRParams>) -> Result<()> {
+    pub fn call_func(&mut self, params: &'ast Option<FuncRParams>) -> Result<Option<Value>> {
         let (curfunc, _) = self.stack.last().unwrap();
-        curfunc.call(params, self)?;
-        Ok(())
+        curfunc.call(params, self)
     }
     pub fn push_loop(&mut self, stmt: &'ast Stmt) -> Result<()> {
         self.stack.last_mut().unwrap().1.push(stmt);
