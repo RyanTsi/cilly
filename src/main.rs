@@ -22,9 +22,9 @@ fn main() -> Result<()> {
     // let input = testcode();
     // 调用 lalrpop 生成的 parser 解析输入文件
     let ast = cy::CompUnitParser::new().parse(&input).unwrap();
+    // println!("{:?}", ast);
     ast.run(&mut Environment::new())?;
     // 输出解析得到的 AST
-    // println!("{:#?}", ast);
     Ok(())
 }
 
