@@ -79,7 +79,7 @@ BType: BType = {
 
 Block: Block = "{" <items: (BlockItem)*> "}" => Block { items };
 
-BlockItem: BlockItem = {
+pub BlockItem: BlockItem = {
   <decl: Decl> => BlockItem::Decl(decl),
   <stmt: Stmt> => BlockItem::Stmt(stmt),
 }

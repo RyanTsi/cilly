@@ -11,13 +11,14 @@ fn feb(n: i32) -> i32 {
     }
 }
 
-fn while_test() -> i32 {
-    var n: i32 = 0;
-    while(n < 10) {
-        print(n);
-        n = n + 1;
+fn while_test(n: i32) -> i32 {
+    var i: i32 = 0;
+    var res: i32 = 0;
+    while(i < 10) {
+        res = res + i;
+        i = i + 1;
     }
-    return n;
+    return res;
 }
 
 fn add(a: i32, b: i32) -> i32 {
@@ -26,7 +27,10 @@ fn add(a: i32, b: i32) -> i32 {
 
 fn main () {
     print(add(100, 100));
-    while_test();
+    
+    val x: i32 = getint();
+    print(while_test(x));
+    
     val n: i32 = getint();
     val res: i32 = fact(n);
     print(res);

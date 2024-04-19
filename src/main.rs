@@ -1,10 +1,11 @@
-use cilly::ast::{Block, FuncDef};
-use cilly::error::Result;
+use cilly::ast::{Block, BlockItem, FuncDef, Stmt};
+use cilly::error::{Error, Result};
 use cilly::interpreter::environment::Environment;
 use cilly::interpreter::Execute;
 use lalrpop_util::lalrpop_mod;
 use std::env::args;
 use std::fs::read_to_string;
+use std::io::{self, Write};
 
 // 引用 lalrpop 生成的解析器
 // 因为我们刚刚创建了 sysy.lalrpop, 所以模块名是 sysy
@@ -14,22 +15,8 @@ fn main() -> Result<()> {
     // 解析命令行参数
     let mut args = args();
     args.next();
-    let input = args.next().unwrap();
-    // args.next(); // -o
-    // let output = args.next().unwrap();  
 
-    // 读取输入文件
-    let input = read_to_string(input).unwrap();
-
-    // let input = testcode();
-
-
-    // 调用 lalrpop 生成的 parser 解析输入文件
-    let ast = cy::CompUnitParser::new().parse(&input).unwrap();
-    
-    // 输出解析得到的 AST
-    println!("{:?}", ast);
-
+    let mode = args.next().unwrap(); // inter or static
 
     // 内置函数声明
     let printfunc = FuncDef {
@@ -44,12 +31,63 @@ fn main() -> Result<()> {
         funcfparams: None,
         block: Block{ items: vec![] },
     };
+    let mut ast = None;
     let mut env = Environment::new();
     env.new_func("print", &printfunc)?;
     env.new_func("getint", &getintfunc)?;
-    
 
-    // ast.run(&mut env)?;
+    match mode.as_str() {
+        "--inter" => {
+            loop {
+                print!(">>> ");
+                io::stdout().flush()?;
+                let mut input = String::new();
+                io::stdin().read_line(&mut input)?;
+                match input.trim() {
+                    "exit" => break,
+                    ""     => continue,
+                    _      => {
+                        ast = Some(cy::BlockItemParser::new().parse(&input));
+                        match ast.unwrap() {
+                            Ok(ast) => {
+                                // let mut env = Environment::new();
+                                // env.new_func("print", &printfunc)?;
+                                // env.new_func("getint", &getintfunc)?;
+                                if let Err(e) = ast.run(&mut env) {
+                                    println!("Error {:?}", e);
+                                    continue;
+                                }
+                            }
+                            Err(e) => {
+                                println!("Error: {:?}", e);
+                                continue;
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "--static" => {
+            let input = args.next().unwrap();
+            // 读取输入文件
+            let input = read_to_string(input)?;
+            // 调用 lalrpop 生成的 parser 解析输入文件
+            let ast = cy::CompUnitParser::new().parse(&input).unwrap();
+            ast.run(&mut env)?;
+
+        },
+        _ => return Err(Error::UnExpectArgs),
+    };
+
+    // args.next(); // -o
+    // let output = args.next().unwrap();  
+
+
+    // let input = testcode();
+    
+    // // 输出解析得到的 AST
+    // println!("{:?}", ast);
+
     
     Ok(())
 }
