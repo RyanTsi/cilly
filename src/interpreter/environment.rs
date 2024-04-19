@@ -15,6 +15,7 @@ pub struct Environment<'ast> {
     stack: Vec<(&'ast FuncDef, Vec<&'ast Stmt>)>,
 }
 
+
 impl<'ast> Environment<'ast> {
     pub fn new() -> Self {
         Self {
@@ -31,11 +32,10 @@ impl<'ast> Environment<'ast> {
         cur.insert(ident, v);
         Ok(())
     }
-
     pub fn update_value(&mut self, ident: &'ast str, v: Value) -> Result<()> {
         for scope in self.values.iter_mut().rev() {
             if let Some(value) = scope.get_mut(ident) {
-                *value = v;
+                *value = v; // 更新值为新的值
                 return Ok(());
             }
         }
@@ -49,10 +49,12 @@ impl<'ast> Environment<'ast> {
         Ok(())
     }
     pub fn value(&self, ident: &'ast str) -> Result<&Value> {
-        for cur in self.values.iter().rev() {
-            if let Some(v) = cur.get(ident) {
+        let mut cur = self.values.len() as i32 - 1;
+        while cur >= 0 {
+            if let Some(v) = self.values[cur as usize].get(ident) {
                 return Ok(v);
             }
+            cur -= 1;
         }
         Err(Error::SymbolNotFound)
     }

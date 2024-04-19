@@ -10,32 +10,32 @@ pub enum GlobalDef {
     Decl(Decl),
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum Decl {
     VarDecl(VarDecl),
     ValDecl(ValDecl),
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct VarDecl {
     pub ident: String,
     pub btype: BType,
     pub initval: InitVal,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct ValDecl {
     pub ident: String,
     pub btype: BType,
     pub initval: InitVal,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct InitVal {
     pub exp: Exp,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct FuncDef {
     pub ident: String,
     pub btype: Option<BType>,
@@ -43,12 +43,12 @@ pub struct FuncDef {
     pub block: Block,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct FuncFParams {
     pub params: Vec<FuncFParam>,    
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct FuncFParam {
     pub ident: String,
     pub btype: BType, 
@@ -59,24 +59,24 @@ pub struct FuncRParams {
     pub exps: Vec<Exp>,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum BType {
     I32,
 }
 
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Block {
     pub items: Vec<BlockItem>,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum BlockItem {
     Decl(Decl),
     Stmt(Stmt),
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum Stmt {
     Assign(LVal, Exp),
     Block(Block),
