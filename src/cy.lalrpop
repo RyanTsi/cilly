@@ -102,6 +102,9 @@ MatchedStmt: Stmt = {
     <exp: (Exp)?> ";" => Stmt::Exp(exp),
     <block: Block> => Stmt::Block(block),
     <funcdef: FuncDef> => Stmt::FuncDef(funcdef),
+    "break" ";" => Stmt::Break,
+    "continue" ";" => Stmt::Continue,
+    "return" <exp: (Exp)?> ";" => Stmt::Ret(exp),
 }
 
 // 不能完全匹配到 else 的 if 语句
@@ -120,9 +123,6 @@ OpenStmt: Stmt = {
         else_branch: Some(Box::new(else_branch))
       },
     "while" "(" <condition: Exp> ")" <loopbody: OpenStmt> => Stmt::While { condition, loopbody: Box::new(loopbody) },
-    "break" ";" => Stmt::Break,
-    "continue" ";" => Stmt::Continue,
-    "return" <exp: (Exp)?> ";" => Stmt::Ret(exp),
 }
 
 LVal: LVal = {

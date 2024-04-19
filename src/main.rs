@@ -1,3 +1,4 @@
+use cilly::ast::{Block, FuncDef};
 use cilly::error::Result;
 use cilly::interpreter::environment::Environment;
 use cilly::interpreter::Execute;
@@ -14,28 +15,58 @@ fn main() -> Result<()> {
     let mut args = args();
     args.next();
     let input = args.next().unwrap();
-    args.next();
-    let output = args.next().unwrap();
+    // args.next(); // -o
+    // let output = args.next().unwrap();  
 
     // 读取输入文件
     let input = read_to_string(input).unwrap();
+
     // let input = testcode();
+
+
     // 调用 lalrpop 生成的 parser 解析输入文件
     let ast = cy::CompUnitParser::new().parse(&input).unwrap();
-    // println!("{:?}", ast);
-    ast.run(&mut Environment::new())?;
+    
     // 输出解析得到的 AST
+    println!("{:?}", ast);
+
+
+    // 内置函数声明
+    let printfunc = FuncDef {
+        ident: "print".to_string(),
+        btype: None,
+        funcfparams: None,
+        block: Block { items: vec![] },
+    };
+    let getintfunc = FuncDef {
+        ident: "getint".to_string(),
+        btype: None,
+        funcfparams: None,
+        block: Block{ items: vec![] },
+    };
+    let mut env = Environment::new();
+    env.new_func("print", &printfunc)?;
+    env.new_func("getint", &getintfunc)?;
+    
+
+    // ast.run(&mut env)?;
+    
     Ok(())
 }
 
 fn testcode() -> &'static str {
     r#"
 fn feb(n: i32) -> i32 {
-    if(n == 0) return 1;
-    return feb(n - 1) * n;
+    if(n < 2) {
+        return 1;
+    } else {
+        return feb(n - 1) + feb(n - 2);
+    }
 }
-fn main() {
-    val x: i32 = feb(2);
+fn main () {
+    val m: i32 = getint();
+    val res: i32 = feb(m);
+    print(res);
 }
     "#
 }

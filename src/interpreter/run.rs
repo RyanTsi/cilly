@@ -1,4 +1,4 @@
-use crate::{ast::{Block, BlockItem, CompUnit, Decl, FuncDef, GlobalDef, LVal, Stmt, ValDecl, VarDecl}, error::{Error, Result}};
+use crate::{ast::{BlockItem, CompUnit, Decl, FuncDef, GlobalDef, Stmt, ValDecl, VarDecl}, error::{Error, Result}};
 
 use super::{environment::Environment, eval::Evaluate, values::{Type, Value}, Execute};
 
@@ -10,6 +10,8 @@ impl<'ast> Execute<'ast> for CompUnit {
                 GlobalDef::Decl(decl) => decl.run(env)?,
             };
         }
+        // printfunc.run(env)?;
+
         if let Ok(_) = env.push_func("main") {
             env.call_func(&None)?;
             // println!("{:?}", env.values);
@@ -26,7 +28,7 @@ impl<'ast> Execute<'ast> for Decl {
             Decl::VarDecl(decl) => decl.run(env)?,
         };
 
-        println!("{:?}", env.values);
+        // println!("{:?}", env.values);
         Ok(None)
     }
 }
@@ -56,14 +58,22 @@ impl<'ast> Execute<'ast> for FuncDef {
 
 impl<'ast> Execute<'ast> for BlockItem {
     fn run(&'ast self, env: &mut Environment<'ast>) -> Result<Option<Label>> {
+        let mut res = Ok(None);
         match &self {
-            BlockItem::Decl(decl) => decl.run(env)?,
-            BlockItem::Stmt(stmt) => stmt.run(env)?,
+            BlockItem::Decl(decl) => {
+                decl.run(env)?;
+            },
+            BlockItem::Stmt(stmt) => {
+                if let Some(content) = stmt.run(env)? {
+                    res = Ok(Some(content));
+                }
+            }
         };
-        Ok(None)
+        res
     }
 }
 
+#[derive(Debug)]
 pub enum Label {
     Type(Option<Type>),
     Continue,
@@ -86,12 +96,15 @@ impl<'ast> Execute<'ast> for Stmt {
             }
             Stmt::Block(block) => {
                 env.enter();
+                let mut res = Ok(None);
                 for item in &block.items {
                     if let Some(label) = item.run(env)? {
-                        return Ok(Some(label));
+                        res = Ok(Some(label));
+                        break;
                     }                    
                 }
                 env.exit();
+                return res;
             }
             Stmt::Exp(exp) => {
                 if let Some(exp) = exp {
@@ -100,12 +113,16 @@ impl<'ast> Execute<'ast> for Stmt {
             }
             Stmt::Ret(exp) => {
                 if let Some(exp) = exp {
-                    return Ok(Some(Label::Type(Some(Type::from(exp.eval(env))))))
+                    let x = Label::Type(Some(Type::from(exp.eval(env))));
+                    // println!("{:?}", x);
+
+                    return Ok(Some(x))
                 } else {
                     return Ok(Some(Label::Type(None)));
                 }
             },
             Stmt::If { condition, then_branch, else_branch } => {
+                // println!("{:?}", env.values);
                 if let Some(condition) = condition.eval(env) {
                     if condition != 0 {
                         if let Some(label) = then_branch.run(env)? {

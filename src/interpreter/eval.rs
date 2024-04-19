@@ -98,13 +98,17 @@ impl<'ast> Evaluate<'ast> for RelExp {
 
 impl<'ast> Evaluate<'ast> for AddExp {
     fn eval(&'ast self, env: &mut Environment<'ast>) -> Option<i32> {
+        // println!("{:?}", &self);
         match &self {
             AddExp::Mul(mul) => mul.eval(env),
             AddExp::Add(lhs, op, rhs) => {
                 match (lhs.eval(env), rhs.eval(env)) {
                     (Some(lhs), Some(rhs)) => {
                         match op {
-                            BinaryOp::Add => Some(lhs + rhs),
+                            BinaryOp::Add => {
+                                // println!("!!!{} {}", lhs, rhs);
+                                Some(lhs + rhs)
+                            }
                             BinaryOp::Sub => Some(lhs - rhs),
                             _ => None,
                         }

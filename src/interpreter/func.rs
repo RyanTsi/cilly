@@ -1,11 +1,36 @@
-use crate::{ast::{BType, Block, BlockItem, Decl, FuncDef, FuncFParams, FuncRParams, Stmt}, error::{Error, Result}, interpreter::eval::Evaluate};
+/**
+ * 函数的调用，内置函数的实现
+ */
+
+use std::io;
+
+use crate::{ast::{BlockItem, FuncDef, FuncRParams}, error::{Error, Result}, interpreter::eval::Evaluate};
 
 use super::{environment::Environment, run::Label, values::{Type, Value}, Execute};
 
 
-
 impl<'ast> FuncDef {
     pub fn call(&'ast self, params: &'ast Option<FuncRParams>, env: &mut Environment<'ast>) -> Result<Option<Value>> {
+        match self.ident.as_str() {
+            "print" => {
+                if let Some(params) = params {
+                    for param in &params.exps {
+                        if let Some(res) = param.eval(env) {
+                            println!("{}", res);
+                        }
+                    }
+                }
+                return Ok(None);
+            }
+            "getint" => {
+                let mut input = String::new();
+                io::stdin().read_line(&mut input).unwrap();
+                let input: i32 = input.trim().parse().unwrap();
+                let input = Type::from(Some(input));
+                return Ok(Some(Value::new(true, input)));
+            }
+            _ => ()
+        };
         env.enter();
         let mut res = Ok(None);
         if let (Some(Rparams), Some(Lparams)) = (params, &self.funcfparams) {
@@ -39,6 +64,7 @@ impl<'ast> FuncDef {
             env.run_loop()?;
         }
         env.exit();
+        // println!("{:?}", res);
         res
     }
 }

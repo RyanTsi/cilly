@@ -81,26 +81,69 @@ LOrExp          ::= LAndExp | LOrExp "||" LAndExp;
 **测试代码**
 
 ```
-fn abs(a: i32) -> i32 {
-    fn b(x : i32) {
-        return a + b;
-    }
-    return b;
+fn fact(n: i32) -> i32 {
+    if(n == 0) return 1;
+    return n * fact(n - 1);
 }
 
 fn feb(n: i32) -> i32 {
-    if(n == 0) return 1;
-    return n * feb(n - 1);
+    if(n < 2) {
+        return 1;
+    } else {
+        return feb(n - 1) + feb(n - 2);
+    }
+}
+
+fn while_test() -> i32 {
+    var n: i32 = 0;
+    while(n < 10) {
+        print(n);
+        n = n + 1;
+    }
+    return n;
+}
+
+fn add(a: i32, b: i32) -> i32 {
+    return a + b;
 }
 
 fn main () {
-    val a: i32 = abs(1);
-    val b: i32 = a(1);
-    val res: i32 = feb(10);
+    while_test();
+    val n: i32 = getint();
+    val res: i32 = fact(n);
+    print(res);
+    
+    val m: i32 = getint();
+    print(feb(m));
 }
 ```
 
 **AST**
 
-CompUnit { globaldefs: [FuncDef(FuncDef { ident: "abs", btype: Some(I32), funcfparams: Some(FuncFParams { params: [FuncFParam { ident: "a", btype: I32 }] }), block: Block { items: [Stmt(FuncDef(FuncDef { ident: "b", btype: None, funcfparams: Some(FuncFParams { params: [FuncFParam { ident: "x", btype: I32 }] }), block: Block { items: [Stmt(Ret(Some(Exp { lor_exp: And(Eq(Rel(Add(Add(Mul(Unary(Pri(LVal(LVal { ident: "a" })))), Add, Unary(Pri(LVal(LVal { ident: "b" })))))))) })))] } })), Stmt(Ret(Some(Exp { lor_exp: And(Eq(Rel(Add(Mul(Unary(Pri(LVal(LVal { ident: "b" })))))))) })))] } }), FuncDef(FuncDef { ident: "feb", btype: Some(I32), funcfparams: Some(FuncFParams { params: [FuncFParam { ident: "n", btype: I32 }] }), block: Block { items: [Stmt(If { condition: Exp { lor_exp: And(Eq(Eq(Rel(Add(Mul(Unary(Pri(LVal(LVal { ident: "n" })))))), Eq, Add(Mul(Unary(Pri(Number(0)))))))) }, then_branch: Ret(Some(Exp { lor_exp: And(Eq(Rel(Add(Mul(Unary(Pri(Number(1)))))))) })), else_branch: None }), Stmt(Ret(Some(Exp { lor_exp: And(Eq(Rel(Add(Mul(Mul(Unary(Pri(LVal(LVal { ident: "n" }))), Mul, FuncCall { ident: "feb", funcrparams: Some(FuncRParams { exps: [Exp { lor_exp: And(Eq(Rel(Add(Add(Mul(Unary(Pri(LVal(LVal { ident: "n" })))), Sub, Unary(Pri(Number(1)))))))) }] }) })))))) })))] } }), FuncDef(FuncDef { ident: "main", btype: None, funcfparams: None, block: Block { items: [Decl(ValDecl(ValDecl { ident: "a", btype: I32, initval: InitVal { exp: Exp { lor_exp: And(Eq(Rel(Add(Mul(Unary(FuncCall { ident: "abs", funcrparams: Some(FuncRParams { exps: [Exp { lor_exp: And(Eq(Rel(Add(Mul(Unary(Pri(Number(1)))))))) }] }) })))))) } } })), Decl(ValDecl(ValDecl { ident: "b", btype: I32, initval: InitVal { exp: Exp { lor_exp: And(Eq(Rel(Add(Mul(Unary(FuncCall { ident: "a", funcrparams: Some(FuncRParams { exps: [Exp { lor_exp: And(Eq(Rel(Add(Mul(Unary(Pri(Number(1)))))))) }] }) })))))) } } })), Decl(ValDecl(ValDecl { ident: "res", btype: I32, initval: InitVal { exp: Exp { lor_exp: And(Eq(Rel(Add(Mul(Unary(FuncCall { ident: "feb", funcrparams: Some(FuncRParams { exps: [Exp { lor_exp: And(Eq(Rel(Add(Mul(Unary(Pri(Number(10)))))))) }] }) })))))) } } }))] } })] }
+CompUnit { globaldefs: [FuncDef(FuncDef { ident: "fact", btype: Some(I32), funcfparams: Some(FuncFParams { params: [FuncFParam { ident: "n", btype: I32 }] }), block: Block { items: [Stmt(If { condition: Exp { lor_exp: And(Eq(Eq(Rel(Add(Mul(Unary(Pri(LVal(LVal { ident: "n" })))))), Eq, Add(Mul(Unary(Pri(Number(0)))))))) }, then_branch: Ret(Some(Exp { lor_exp: And(Eq(Rel(Add(Mul(Unary(Pri(Number(1)))))))) })), else_branch: None }), Stmt(Ret(Some(Exp { lor_exp: And(Eq(Rel(Add(Mul(Mul(Unary(Pri(LVal(LVal { ident: "n" }))), Mul, FuncCall { ident: "fact", funcrparams: Some(FuncRParams { exps: [Exp { lor_exp: And(Eq(Rel(Add(Add(Mul(Unary(Pri(LVal(LVal { ident: "n" })))), Sub, Unary(Pri(Number(1)))))))) }] }) })))))) })))] } }), FuncDef(FuncDef { ident: "feb", btype: Some(I32), funcfparams: Some(FuncFParams { params: [FuncFParam { ident: "n", btype: I32 }] }), block: Block { items: [Stmt(If { condition: Exp { lor_exp: And(Eq(Rel(Rel(Add(Mul(Unary(Pri(LVal(LVal { ident: "n" }))))), Lt, Mul(Unary(Pri(Number(2)))))))) }, then_branch: Block(Block { items: [Stmt(Ret(Some(Exp { lor_exp: And(Eq(Rel(Add(Mul(Unary(Pri(Number(1)))))))) })))] }), else_branch: Some(Block(Block { items: [Stmt(Ret(Some(Exp { lor_exp: And(Eq(Rel(Add(Add(Mul(Unary(FuncCall { ident: "feb", funcrparams: Some(FuncRParams { exps: [Exp { lor_exp: And(Eq(Rel(Add(Add(Mul(Unary(Pri(LVal(LVal { ident: "n" })))), Sub, Unary(Pri(Number(1)))))))) }] }) })), Add, Unary(FuncCall { ident: "feb", funcrparams: Some(FuncRParams { exps: [Exp { lor_exp: And(Eq(Rel(Add(Add(Mul(Unary(Pri(LVal(LVal { ident: "n" })))), Sub, Unary(Pri(Number(2)))))))) }] }) })))))) })))] })) })] } }), FuncDef(FuncDef { ident: "while_test", btype: Some(I32), funcfparams: None, block: Block { items: [Decl(VarDecl(VarDecl { ident: "n", btype: I32, initval: InitVal { exp: Exp { lor_exp: And(Eq(Rel(Add(Mul(Unary(Pri(Number(0)))))))) } } })), Stmt(While { condition: Exp { lor_exp: And(Eq(Rel(Rel(Add(Mul(Unary(Pri(LVal(LVal { ident: "n" }))))), Lt, Mul(Unary(Pri(Number(10)))))))) }, loopbody: Block(Block { items: [Stmt(Exp(Some(Exp { lor_exp: And(Eq(Rel(Add(Mul(Unary(FuncCall { ident: "print", funcrparams: Some(FuncRParams { exps: [Exp { lor_exp: And(Eq(Rel(Add(Mul(Unary(Pri(LVal(LVal { ident: "n" })))))))) }] }) })))))) }))), Stmt(Assign(LVal { ident: "n" }, Exp { lor_exp: And(Eq(Rel(Add(Add(Mul(Unary(Pri(LVal(LVal { ident: "n" })))), Add, Unary(Pri(Number(1)))))))) }))] }) }), Stmt(Ret(Some(Exp { lor_exp: And(Eq(Rel(Add(Mul(Unary(Pri(LVal(LVal { ident: "n" })))))))) })))] } }), FuncDef(FuncDef { ident: "add", btype: Some(I32), funcfparams: Some(FuncFParams { params: [FuncFParam { ident: "a", btype: I32 }, FuncFParam { ident: "b", btype: I32 }] }), block: Block { items: [Stmt(Ret(Some(Exp { lor_exp: And(Eq(Rel(Add(Add(Mul(Unary(Pri(LVal(LVal { ident: "a" })))), Add, Unary(Pri(LVal(LVal { ident: "b" })))))))) })))] } }), FuncDef(FuncDef { ident: "main", btype: None, funcfparams: None, block: Block { items: [Stmt(Exp(Some(Exp { lor_exp: And(Eq(Rel(Add(Mul(Unary(FuncCall { ident: "print", funcrparams: Some(FuncRParams { exps: [Exp { lor_exp: And(Eq(Rel(Add(Mul(Unary(FuncCall { ident: "add", funcrparams: Some(FuncRParams { exps: [Exp { lor_exp: And(Eq(Rel(Add(Mul(Unary(Pri(Number(100)))))))) }, Exp { lor_exp: And(Eq(Rel(Add(Mul(Unary(Pri(Number(100)))))))) }] }) })))))) }] }) })))))) }))), Stmt(Exp(Some(Exp { lor_exp: And(Eq(Rel(Add(Mul(Unary(FuncCall { ident: "while_test", funcrparams: None })))))) }))), Decl(ValDecl(ValDecl { ident: "n", btype: I32, initval: InitVal { exp: Exp { lor_exp: And(Eq(Rel(Add(Mul(Unary(FuncCall { ident: "getint", funcrparams: None })))))) } } })), Decl(ValDecl(ValDecl { ident: "res", btype: I32, initval: InitVal { exp: Exp { lor_exp: And(Eq(Rel(Add(Mul(Unary(FuncCall { ident: "fact", funcrparams: Some(FuncRParams { exps: [Exp { lor_exp: And(Eq(Rel(Add(Mul(Unary(Pri(LVal(LVal { ident: "n" })))))))) }] }) })))))) } } })), Stmt(Exp(Some(Exp { lor_exp: And(Eq(Rel(Add(Mul(Unary(FuncCall { ident: "print", funcrparams: Some(FuncRParams { exps: [Exp { lor_exp: And(Eq(Rel(Add(Mul(Unary(Pri(LVal(LVal { ident: "res" })))))))) }] }) })))))) }))), Decl(ValDecl(ValDecl { ident: "m", btype: I32, initval: InitVal { exp: Exp { lor_exp: And(Eq(Rel(Add(Mul(Unary(FuncCall { ident: "getint", funcrparams: None })))))) } } })), Stmt(Exp(Some(Exp { lor_exp: And(Eq(Rel(Add(Mul(Unary(FuncCall { ident: "print", funcrparams: Some(FuncRParams { exps: [Exp { lor_exp: And(Eq(Rel(Add(Mul(Unary(FuncCall { ident: "feb", funcrparams: Some(FuncRParams { exps: [Exp { lor_exp: And(Eq(Rel(Add(Mul(Unary(Pri(LVal(LVal { ident: "m" })))))))) }] }) })))))) }] }) })))))) })))] } })] }
 
+
+**解释器结果**
+
+input
+```
+10
+10
+```
+
+output
+```
+200
+0
+1
+2
+3
+4
+5
+6
+7
+8
+9
+3628800
+89
+```

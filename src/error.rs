@@ -9,8 +9,8 @@ pub enum Error {
     ParserUnexpectedEnd,
     ParserUnexpectedMatch(String),
     InterpreterError(String),
-    DuplicatedDef,
-    SymbolNotFound,
-    CallError(String),
-    MissingExpression,
+    DuplicatedDef,      // 定义冲突
+    SymbolNotFound,     // 缺少定义
+    CallError(String),  // 函数调用错误
+    MissingExpression,  // 缺少表达式
 }
