@@ -10,8 +10,8 @@ use super::{eval::Evaluate, values::Value, Execute};
 
 #[derive(Debug)]
 pub struct Environment<'ast> {
-    funcs: HashMap<&'ast str, &'ast FuncDef>,
-    values: Vec<HashMap<&'ast str, Value>>,
+    funcs: HashMap<String, FuncDef>,
+    values: Vec<HashMap<String, Value>>,
     stack: Vec<(&'ast FuncDef, Vec<&'ast Stmt>)>,
 }
 
@@ -24,12 +24,12 @@ impl<'ast> Environment<'ast> {
             stack: Vec::new(),
         }
     }
-    pub fn new_value(&mut self, ident: &'ast str, v: Value) -> Result<()> {
+    pub fn new_value(&mut self, ident: &str, v: Value) -> Result<()> {
         let cur = self.values.last_mut().unwrap();
-        if let Some(Value::Const(_)) = cur.get(&ident) {
+        if let Some(Value::Const(_)) = cur.get(ident) {
             return Err(Error::DuplicatedDef);
         }
-        cur.insert(ident, v);
+        cur.insert(String::from(ident), v);
         Ok(())
     }
     pub fn update_value(&mut self, ident: &'ast str, v: Value) -> Result<()> {
@@ -41,24 +41,22 @@ impl<'ast> Environment<'ast> {
         }
         Err(Error::SymbolNotFound)
     }
-    pub fn new_func(&mut self, ident: &'ast str, func: &'ast FuncDef) -> Result<()> {
+    pub fn new_func(&mut self, ident: &str, func: &'ast FuncDef) -> Result<()> {
         if self.funcs.contains_key(ident) {
             return Err(Error::DuplicatedDef);
         }
-        self.funcs.insert(ident, func);
+        self.funcs.insert(String::from(ident), func.clone());
         Ok(())
     }
-    pub fn value(&self, ident: &'ast str) -> Result<&Value> {
-        let mut cur = self.values.len() as i32 - 1;
-        while cur >= 0 {
-            if let Some(v) = self.values[cur as usize].get(ident) {
+    pub fn value(&self, ident: &str) -> Result<&Value> {
+        for scope in self.values.iter().rev() {
+            if let Some(v) = scope.get(ident) {
                 return Ok(v);
             }
-            cur -= 1;
         }
         Err(Error::SymbolNotFound)
     }
-    pub fn func(&self, ident: &'ast str) -> Result<&'ast FuncDef> {
+    pub fn func(&self, ident: &'ast str) -> Result<&FuncDef> {
         if let Some(func) = self.funcs.get(ident) {
             return Ok(func);
         }

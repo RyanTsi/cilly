@@ -26,7 +26,9 @@ fn add(a: i32, b: i32) -> i32 {
 }
 
 fn main () {
-    print(add(100, 100));
+    val a: i32 = getint();
+    val b: i32 = getint();
+    print(add(a, b));
     
     val x: i32 = getint();
     print(while_test(x));
