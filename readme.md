@@ -147,3 +147,45 @@ output
 3628800
 89
 ```
+
+### 虚拟机字节码
+
+```
+LOAD_CONST = 1      加载一个常数到栈顶
+LOAD_TRUE = 2       加载True到栈顶
+LOAD_FALSE = 3      加载False到栈顶
+LOAD_NULL = 4       加载NULL到栈顶
+LOAD_GLOBAL = 5     从全局变量中加载一个变量到栈顶
+STORE_GLOBAL = 6    将栈顶的值储存到全局变量表中
+
+BINOP_ADD = 10      栈顶两个值相加BINOP_SUB = 11: 栈顶两个值相减。
+BINOP_MUL = 12      栈顶两个值相乘。
+BINOP_DIV = 13      栈顶两个值相除。
+BINOP_GT = 14       比较栈顶两个值，大于则结果为true。
+BINOP_GE = 15       比较栈顶两个值，大于等于则结果为true。
+BINOP_LT = 16       比较栈顶两个值，小于则结果为true。
+BINOP_LE = 17       比较栈顶两个值，小于等于则结果为true。
+BINOP_EQ = 18       比较栈顶两个值，相等则结果为true。
+BINOP_NE = 19       比较栈顶两个值，不相等则结果为true。
+
+JMP = 20            无条件跳转到指定位置。
+JMP_TRUE = 21       如果栈顶值为true，跳转到指定位置。
+JMP_FALSE = 22      如果栈顶值为false，跳转到指定位置。
+
+PRINT_ITEM = 23     打印栈顶的值。
+PRINT_NEWLINE = 24  打印一个换行符。
+
+POP = 25            弹出栈顶的值。
+UNIOP_NOT = 26      对栈顶的布尔值取反。
+UNIOP_NEG = 27      对栈顶的值取负。
+
+STORE_VAR = 28      将栈顶的值存储到局部变量表中。
+LOAD_VAR = 29       从局部变量表中加载一个变量到栈顶。
+
+ENTER_SCOPE = 30    进入一个新的作用域。
+LEAVE_SCOPE = 31    离开当前作用域。
+
+MAKE_CLOSURE = 32   创建一个闭包。
+CALL = 33           调用一个函数。
+RET = 34            从当前函数返回。
+```
