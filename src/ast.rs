@@ -1,10 +1,10 @@
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct CompUnit {
     pub globaldefs: Vec<GlobalDef>,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum GlobalDef {
     FuncDef(FuncDef),
     Decl(Decl),

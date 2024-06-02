@@ -1,4 +1,5 @@
-use cilly::ast::{Block, FuncDef};
+use cilly::ast::{Block, FuncDef, FuncFParam, FuncFParams};
+use cilly::bytecode_translation::TransByteCode;
 use cilly::error::{Error, Result};
 use cilly::interpreter::environment::Environment;
 use cilly::interpreter::Execute;
@@ -21,7 +22,7 @@ fn main() -> Result<()> {
     let printfunc = FuncDef {
         ident: "print".to_string(),
         btype: None,
-        funcfparams: None,
+        funcfparams: Some(FuncFParams{params:vec![FuncFParam {ident: String::from("content"), btype: cilly::ast::BType::I32}]}),
         block: Block { items: vec![] },
     };
     let getintfunc = FuncDef {
@@ -69,11 +70,14 @@ fn main() -> Result<()> {
             // 读取输入文件
             let input = read_to_string(input)?;
             // 调用 lalrpop 生成的 parser 解析输入文件
-            let ast = cy::CompUnitParser::new().parse(&input).unwrap();{
-                ast.run(&mut env)?;
-            }
-
+            let ast = cy::CompUnitParser::new().parse(&input).unwrap();
+            ast.run(&mut env)?;
         },
+        "--translate" => {
+            let mut ast = cy::CompUnitParser::new().parse(testcode2()).unwrap();
+            let res = ast.translate_byte(&mut cilly::bytecode_translation::environment::Environment::new(), 0)?;
+            println!("{:?}", res);
+        }
         _ => return Err(Error::UnExpectArgs),
     };
 
@@ -89,7 +93,7 @@ fn main() -> Result<()> {
     Ok(())
 }
 
-fn testcode() -> &'static str {
+fn testcode1() -> &'static str {
     r#"
 fn feb(n: i32) -> i32 {
     if(n < 2) {
@@ -103,5 +107,11 @@ fn main () {
     val res: i32 = feb(m);
     print(res);
 }
+    "#
+}
+
+fn testcode2() -> &'static str {
+    r#"
+var a:i32 = 1 + 2;
     "#
 }

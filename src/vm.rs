@@ -7,32 +7,36 @@ pub enum OpCode {
     LoadFalse,                  // 3
     LoadNull,                   // 4
     LoadGlobal(usize),          // 5
-    StoreGlobal(usize),         // 6
-    BinOpAdd,                   // 10
-    BinOpSub,                   // 11
-    BinOpMul,                   // 12
-    BinOpDiv,                   // 13
-    BinOpGt,                    // 14
-    BinOpGe,                    // 15
-    BinOpLt,                    // 16
-    BinOpLe,                    // 17
-    BinOpEq,                    // 18
-    BinOpNe,                    // 19
-    Jmp(usize),                 // 20
-    JmpTrue(usize),             // 21
-    JmpFalse(usize),            // 22
-    PrintItem,                  // 23
-    PrintNewline,               // 24
-    Pop,                        // 25
-    UniOpNot,                   // 26
-    UniOpNeg,                   // 27
-    StoreVar(usize),            // 28
-    LoadVar(usize, usize),      // 29
-    EnterScope(usize),          // 30
-    LeaveScope,                 // 31
-    MakeClosure,                // 32
-    Call(usize, usize),         // 33
-    Ret,                        // 34
+    StoreGlobal,                // 6
+
+    BinOpAdd,                   // 100
+    BinOpSub,                   // 101
+    BinOpMul,                   // 102
+    BinOpDiv,                   // 103
+    BinOpGt,                    // 104
+    BinOpGe,                    // 105
+    BinOpLt,                    // 106
+    BinOpLe,                    // 107
+    BinOpEq,                    // 108
+    BinOpNe,                    // 109
+    BinOpOr,                    // 110
+    BinOpAnd,                   // 111
+
+    Jmp(usize),                 // 10
+    JmpTrue(usize),             // 11
+    JmpFalse(usize),            // 12
+    PrintItem,                  // 13
+    PrintNewline,               // 14
+    Pop,                        // 15
+    UniOpNot,                   // 16
+    UniOpNeg,                   // 17
+    StoreVar(usize),            // 18
+    LoadVar(usize, usize),      // 19
+    EnterScope(usize),          // 20
+    LeaveScope,                 // 21
+    MakeClosure,                // 22
+    Call(usize, usize),         // 23
+    Ret,                        // 24
 }
 
 pub struct VM {
@@ -52,7 +56,7 @@ impl VM {
         }
     }
     pub fn run(&mut self) -> Result<()> {
-        while self.pc < self.code.len() && self.pc >= 0 {
+        while self.pc < self.code.len() {
             let index = self.code[self.pc];
             self.pc += 1;
             match index {
@@ -68,8 +72,13 @@ impl VM {
                 OpCode::LoadNull => {
                     self.push(0);
                 },
-                OpCode::LoadGlobal(_) => todo!(),
-                OpCode::StoreGlobal(_) => todo!(),
+                OpCode::LoadGlobal(pos) => {
+                    self.push(self.scpoes[0][pos]);
+                },
+                OpCode::StoreGlobal => {
+                    let v = self.pop();
+                    self.scpoes[0].push(v);
+                },
                 OpCode::BinOpAdd => {
                     self.binop(index)?;
                 },
@@ -100,6 +109,12 @@ impl VM {
                 OpCode::BinOpNe => {
                     self.binop(index)?;
                 },
+                OpCode::BinOpOr => {
+                    self.binop(index)?;
+                }
+                OpCode::BinOpAnd => {
+                    self.binop(index)?;
+                }
                 OpCode::Jmp(next) => {
                     self.pc = next.clone();
                 },
@@ -178,9 +193,6 @@ impl VM {
     fn pop(&mut self) -> i32 {
         self.stack.pop().unwrap()
     }
-    fn top(&self) -> i32 {
-        *self.stack.last().unwrap()
-    }
     fn binop(&mut self, op: OpCode) -> Result<()>{
         let v1 = self.pop();
         let v2 = self.pop();
@@ -238,6 +250,20 @@ impl VM {
                     v = Some(1);
                 } else {
                     v = Some(0);
+                }
+            }
+            OpCode::BinOpOr => {
+                if v1 != 0 || v2 != 0 {
+                    v = Some(1);
+                } else {
+                    v = Some(0);
+                }
+            }
+            OpCode::BinOpAnd => {
+                if v1 == 0 || v2 == 0 {
+                    v = Some(0);
+                } else {
+                    v = Some(1);
                 }
             }
             _ => {
