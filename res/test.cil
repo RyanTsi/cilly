@@ -3,6 +3,7 @@ fn fact(n: i32) -> i32 {
     return n * fact(n - 1);
 }
 
+var a: i32 = 10;
 fn feb(n: i32) -> i32 {
     if(n < 2) {
         return 1;
@@ -26,6 +27,7 @@ fn add(a: i32, b: i32) -> i32 {
 }
 
 fn main () {
+    print(a);
     print(add(100, 100));
     
     val x: i32 = getint();

@@ -1,44 +1,43 @@
 use crate::error::{Error, Result};
 
-#[derive(Debug)]
-enum OpCode {
-    LoadConst(i32),      // 1
-    LoadTrue,            // 2
-    LoadFalse,           // 3
-    LoadNull,            // 4
-    LoadGlobal(usize),   // 5
-    StoreGlobal(usize),  // 6
-    BinOpAdd,            // 10
-    BinOpSub,            // 11
-    BinOpMul,            // 12
-    BinOpDiv,            // 13
-    BinOpGt,             // 14
-    BinOpGe,             // 15
-    BinOpLt,             // 16
-    BinOpLe,             // 17
-    BinOpEq,             // 18
-    BinOpNe,             // 19
-    Jmp(usize),          // 20
-    JmpTrue(usize),      // 21
-    JmpFalse(usize),     // 22
-    PrintItem,           // 23
-    PrintNewline,        // 24
-    Pop,                 // 25
-    UniOpNot,            // 26
-    UniOpNeg,            // 27
-    StoreVar(usize),     // 28
-    LoadVar(usize),      // 29
-    EnterScope,          // 30
-    LeaveScope,          // 31
-    MakeClosure,         // 32
-    Call(usize),         // 33
-    Ret,                 // 34
+#[derive(Debug, Clone, Copy)]
+pub enum OpCode {
+    LoadConst(i32),             // 1
+    LoadTrue,                   // 2
+    LoadFalse,                  // 3
+    LoadNull,                   // 4
+    LoadGlobal(usize),          // 5
+    StoreGlobal(usize),         // 6
+    BinOpAdd,                   // 10
+    BinOpSub,                   // 11
+    BinOpMul,                   // 12
+    BinOpDiv,                   // 13
+    BinOpGt,                    // 14
+    BinOpGe,                    // 15
+    BinOpLt,                    // 16
+    BinOpLe,                    // 17
+    BinOpEq,                    // 18
+    BinOpNe,                    // 19
+    Jmp(usize),                 // 20
+    JmpTrue(usize),             // 21
+    JmpFalse(usize),            // 22
+    PrintItem,                  // 23
+    PrintNewline,               // 24
+    Pop,                        // 25
+    UniOpNot,                   // 26
+    UniOpNeg,                   // 27
+    StoreVar(usize),            // 28
+    LoadVar(usize, usize),      // 29
+    EnterScope(usize),          // 30
+    LeaveScope,                 // 31
+    MakeClosure,                // 32
+    Call(usize, usize),         // 33
+    Ret,                        // 34
 }
 
 pub struct VM {
     stack: Vec<i32>,
-    call_stack: Vec<i32>,           // 函数调用栈
-    scpoes: Vec<Vec<Option<i32>>>,
+    scpoes: Vec<Vec<i32>>,  // 返回地址 | 参数个数 | 参数 | Local 变量
     pc: usize,
     code: Vec<OpCode>
 }
@@ -47,37 +46,131 @@ impl VM {
     pub fn new(code: Vec<OpCode>) -> Self {
         Self {
             stack: Vec::new(),
-            call_stack: Vec::new(),
-            scpoes: Vec::new(),
+            scpoes: vec![vec![-1, 0]],
             pc: 0,
             code,
         }
     }
-    pub fn run(&mut self) {
-        while self.pc < self.code.len() {
-            let index = &self.code[self.pc];
+    pub fn run(&mut self) -> Result<()> {
+        while self.pc < self.code.len() && self.pc >= 0 {
+            let index = self.code[self.pc];
             self.pc += 1;
-            
+            match index {
+                OpCode::LoadConst(v) => {
+                    self.push(v);
+                },
+                OpCode::LoadTrue => {
+                    self.push(1);
+                },
+                OpCode::LoadFalse => {
+                    self.push(0);
+                },
+                OpCode::LoadNull => {
+                    self.push(0);
+                },
+                OpCode::LoadGlobal(_) => todo!(),
+                OpCode::StoreGlobal(_) => todo!(),
+                OpCode::BinOpAdd => {
+                    self.binop(index)?;
+                },
+                OpCode::BinOpSub => {
+                    self.binop(index)?;
+                },
+                OpCode::BinOpMul => {
+                    self.binop(index)?;
+                },
+                OpCode::BinOpDiv => {
+                    self.binop(index)?;
+                },
+                OpCode::BinOpGt => {
+                    self.binop(index)?;
+                },
+                OpCode::BinOpGe => {
+                    self.binop(index)?;
+                },
+                OpCode::BinOpLt => {
+                    self.binop(index)?;
+                },
+                OpCode::BinOpLe => {
+                    self.binop(index)?;
+                },
+                OpCode::BinOpEq => {
+                    self.binop(index)?;
+                },
+                OpCode::BinOpNe => {
+                    self.binop(index)?;
+                },
+                OpCode::Jmp(next) => {
+                    self.pc = next.clone();
+                },
+                OpCode::JmpTrue(next) => {
+                    let condition = self.pop();
+                    if condition == 1 {
+                        self.pc = next;
+                    }
+                },
+                OpCode::JmpFalse(next) => {
+                    let condition = self.pop();
+                    if condition == 1 {
+                        self.pc = next;
+                    }
+                },
+                OpCode::PrintItem => {
+                    let c = self.pop();
+                    print!("{c}");
+                },
+                OpCode::PrintNewline => {
+                    println!("");
+                },
+                OpCode::Pop => {
+                    self.pop();
+                },
+                OpCode::UniOpNot => {
+                    let v = !self.pop();
+                    self.push(v);
+                },
+                OpCode::UniOpNeg => {
+                    let v = -self.pop();
+                    self.push(v);
+                },
+                OpCode::StoreVar(scope_i) => {
+                    let v = self.pop();
+                    self.scpoes[scope_i].push(v);
+                },
+                OpCode::LoadVar(scope_i, pos) => {
+                    let v = self.scpoes[scope_i][pos];
+                    self.push(v);
+                },
+                OpCode::EnterScope(sz) => {
+                    self.enter_scope(sz);
+                },
+                OpCode::LeaveScope => {
+                    self.leave_scope();
+                },
+                OpCode::MakeClosure => todo!(),
+                OpCode::Call(next, args_count) => {
+                    self.enter_scope(args_count + 2);
+                    self.scpoes.last_mut().unwrap()[0] = self.pc as i32;
+                    self.scpoes.last_mut().unwrap()[1] = args_count as i32;
+                    for i in 2..args_count + 2 {
+                        let v = self.pop();
+                        self.scpoes.last_mut().unwrap()[i] = v;
+                    }
+                    self.pc = next;
+                },
+                OpCode::Ret => {
+                    self.leave_scope();
+                    self.pc = self.pop() as usize;
+                },
+            }
         }
-    }
-    fn push_call_stack(&mut self, c: i32) {
-        self.call_stack.push(c);
-    }
-
-    fn pop_call_stack(&mut self) -> i32 {
-        self.call_stack.pop().unwrap()
+        Ok(())
     }
     fn enter_scope(&mut self, var_count: usize) {
-        self.scpoes.push(vec![None; var_count]);
+        self.scpoes.push(vec![0; var_count]);
     }
     fn leave_scope(&mut self) {
         self.scpoes.pop();
-    }
-    fn load_var(&mut self, scope_i: usize, i: usize) {
-        self.push(self.scpoes[scope_i][i].unwrap());
-    }
-    fn store_var(&mut self, scope_i: usize, i: usize) {
-        self.scpoes[scope_i][i] = Some(self.pop());
     }
     fn push(&mut self, x: i32) {
         self.stack.push(x);

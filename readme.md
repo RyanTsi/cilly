@@ -158,7 +158,8 @@ LOAD_NULL = 4       加载NULL到栈顶
 LOAD_GLOBAL = 5     从全局变量中加载一个变量到栈顶
 STORE_GLOBAL = 6    将栈顶的值储存到全局变量表中
 
-BINOP_ADD = 10      栈顶两个值相加BINOP_SUB = 11: 栈顶两个值相减。
+BINOP_ADD = 10      栈顶两个值相加。
+BINOP_SUB = 11      栈顶两个值相减。
 BINOP_MUL = 12      栈顶两个值相乘。
 BINOP_DIV = 13      栈顶两个值相除。
 BINOP_GT = 14       比较栈顶两个值，大于则结果为true。
