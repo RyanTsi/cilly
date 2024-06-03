@@ -39,4 +39,5 @@ fn main () {
     
     val m: i32 = getint();
     print(feb(m));
+    return 0;
 }

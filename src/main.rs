@@ -3,6 +3,7 @@ use cilly::bytecode_translation::TransByteCode;
 use cilly::error::{Error, Result};
 use cilly::interpreter::environment::Environment;
 use cilly::interpreter::Execute;
+use cilly::vm::VM;
 use lalrpop_util::lalrpop_mod;
 use std::env::args;
 use std::fs::read_to_string;
@@ -74,9 +75,16 @@ fn main() -> Result<()> {
             ast.run(&mut env)?;
         },
         "--translate" => {
-            let mut ast = cy::CompUnitParser::new().parse(testcode2()).unwrap();
+            let mut ast = cy::CompUnitParser::new().parse(testcode1()).unwrap();
             let res = ast.translate_byte(&mut cilly::bytecode_translation::environment::Environment::new(), 0)?;
-            println!("{:?}", res);
+            let mut id = 0;
+            // println!("{:?}", ast);
+            for i in &res {
+                println!("{}\t\t{:?}",id, i);
+                id += 1;
+            }
+            let mut vm = VM::new(res.clone());
+            vm.run()?;
         }
         _ => return Err(Error::UnExpectArgs),
     };
@@ -103,8 +111,7 @@ fn feb(n: i32) -> i32 {
     }
 }
 fn main () {
-    val m: i32 = getint();
-    val res: i32 = feb(m);
+    val res: i32 = feb(10);
     print(res);
 }
     "#
@@ -112,6 +119,13 @@ fn main () {
 
 fn testcode2() -> &'static str {
     r#"
-var a:i32 = 1 + 2;
+var a: i32 = 0;
+fn main() {
+    while(a < 10) {
+        a = a + 1;
+        continue;
+    }
+    print(a);
+}
     "#
 }

@@ -7,7 +7,7 @@ pub enum OpCode {
     LoadFalse,                  // 3
     LoadNull,                   // 4
     LoadGlobal(usize),          // 5
-    StoreGlobal,                // 6
+    StoreGlobal(usize),         // 6
 
     BinOpAdd,                   // 100
     BinOpSub,                   // 101
@@ -21,27 +21,32 @@ pub enum OpCode {
     BinOpNe,                    // 109
     BinOpOr,                    // 110
     BinOpAnd,                   // 111
-
+    // 跳转的地址
     Jmp(usize),                 // 10
     JmpTrue(usize),             // 11
     JmpFalse(usize),            // 12
+    
     PrintItem,                  // 13
     PrintNewline,               // 14
     Pop,                        // 15
     UniOpNot,                   // 16
     UniOpNeg,                   // 17
-    StoreVar(usize),            // 18
+    // dep, pos
+    StoreVar(usize, usize),     // 18
+    // dep, pos
     LoadVar(usize, usize),      // 19
+    // args个数
     EnterScope(usize),          // 20
     LeaveScope,                 // 21
     MakeClosure,                // 22
+    // pc_addr, args个数 
     Call(usize, usize),         // 23
     Ret,                        // 24
 }
 
 pub struct VM {
     stack: Vec<i32>,
-    scpoes: Vec<Vec<i32>>,  // 返回地址 | 参数个数 | 参数 | Local 变量
+    scpoes: Vec<Vec<i32>>,  // 参数 | Local 变量
     pc: usize,
     code: Vec<OpCode>
 }
@@ -50,7 +55,7 @@ impl VM {
     pub fn new(code: Vec<OpCode>) -> Self {
         Self {
             stack: Vec::new(),
-            scpoes: vec![vec![-1, 0]],
+            scpoes: vec![Vec::new()],
             pc: 0,
             code,
         }
@@ -75,9 +80,13 @@ impl VM {
                 OpCode::LoadGlobal(pos) => {
                     self.push(self.scpoes[0][pos]);
                 },
-                OpCode::StoreGlobal => {
+                OpCode::StoreGlobal(pos) => {
                     let v = self.pop();
-                    self.scpoes[0].push(v);
+                    // println!("!!{v}");
+                    while self.scpoes[0].len() < pos + 1 {
+                        self.scpoes[0].push(0);
+                    }
+                    self.scpoes[0][pos] = v;
                 },
                 OpCode::BinOpAdd => {
                     self.binop(index)?;
@@ -148,9 +157,12 @@ impl VM {
                     let v = -self.pop();
                     self.push(v);
                 },
-                OpCode::StoreVar(scope_i) => {
+                OpCode::StoreVar(scope_i, pos) => {
                     let v = self.pop();
-                    self.scpoes[scope_i].push(v);
+                    while self.scpoes[scope_i].len() - 1 < pos {
+                        self.scpoes[scope_i].push(0);
+                    }
+                    self.scpoes[scope_i][pos] = v;
                 },
                 OpCode::LoadVar(scope_i, pos) => {
                     let v = self.scpoes[scope_i][pos];
@@ -164,10 +176,8 @@ impl VM {
                 },
                 OpCode::MakeClosure => todo!(),
                 OpCode::Call(next, args_count) => {
-                    self.enter_scope(args_count + 2);
-                    self.scpoes.last_mut().unwrap()[0] = self.pc as i32;
-                    self.scpoes.last_mut().unwrap()[1] = args_count as i32;
-                    for i in 2..args_count + 2 {
+                    self.enter_scope(args_count);
+                    for i in 0..args_count {
                         let v = self.pop();
                         self.scpoes.last_mut().unwrap()[i] = v;
                     }
