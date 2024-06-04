@@ -148,45 +148,161 @@ output
 89
 ```
 
-### 虚拟机字节码
+### 虚拟机字节码表
 
 ```
-LOAD_CONST = 1      加载一个常数到栈顶
-LOAD_TRUE = 2       加载True到栈顶
-LOAD_FALSE = 3      加载False到栈顶
-LOAD_NULL = 4       加载NULL到栈顶
-LOAD_GLOBAL = 5     从全局变量中加载一个变量到栈顶
-STORE_GLOBAL = 6    将栈顶的值储存到全局变量表中
+LoadConst(i32),              1      加载一个常数到栈顶。
+LoadTrue,                    2      加载True到栈顶。
+LoadFalse,                   3      加载False到栈顶。
+LoadNull,                    4      加载NULL到栈顶。
+LoadGlobal(usize),           5      从全局变量中加载一个变量到栈顶。
+StoreGlobal(usize),          6      将栈顶的值储存到全局变量表中。
 
-BINOP_ADD = 10      栈顶两个值相加。
-BINOP_SUB = 11      栈顶两个值相减。
-BINOP_MUL = 12      栈顶两个值相乘。
-BINOP_DIV = 13      栈顶两个值相除。
-BINOP_GT = 14       比较栈顶两个值，大于则结果为true。
-BINOP_GE = 15       比较栈顶两个值，大于等于则结果为true。
-BINOP_LT = 16       比较栈顶两个值，小于则结果为true。
-BINOP_LE = 17       比较栈顶两个值，小于等于则结果为true。
-BINOP_EQ = 18       比较栈顶两个值，相等则结果为true。
-BINOP_NE = 19       比较栈顶两个值，不相等则结果为true。
+BinOpAdd,                    100    栈顶两个值相加。 
+BinOpSub,                    101    栈顶两个值相减。
+BinOpMul,                    102    栈顶两个值相乘。
+BinOpDiv,                    103    栈顶两个值相除。
+BinOpGt,                     104    比较栈顶两个值，大于则结果为true。
+BinOpGe,                     105    比较栈顶两个值，大于等于则结果为true。
+BinOpLt,                     106    比较栈顶两个值，小于则结果为true。
+BinOpLe,                     107    比较栈顶两个值，小于等于则结果为true。
+BinOpEq,                     108    比较栈顶两个值，相等则结果为true。
+BinOpNe,                     109    比较栈顶两个值，不相等则结果为true。
+BinOpOr,                     110    栈顶两个值或。
+BinOpAnd,                    111    栈顶两个值与。
+// 跳转的地址
+Jmp(usize),                  10     无条件跳转到指定位置。
+JmpTrue(usize),              11     如果栈顶值为true，跳转到指定位置。
+JmpFalse(usize),             12     如果栈顶值为false，跳转到指定位置。
 
-JMP = 20            无条件跳转到指定位置。
-JMP_TRUE = 21       如果栈顶值为true，跳转到指定位置。
-JMP_FALSE = 22      如果栈顶值为false，跳转到指定位置。
+PrintItem,                   13     打印栈顶的值。
+PrintNewline,                14     打印一个换行符。
+GetInt,                      15     输入一个整数
+Pop,                         16     弹出栈顶值
+UniOpNot,                    17     对栈顶的布尔值取反。
+UniOpNeg,                    18     对栈顶的值取负。
+StorePC,                     19     存储当前 PC。
+LoadPC,                      20     从 PC 栈中加载。
+// dep, pos
+StoreVar(usize, usize),      21     将栈顶的值存储到局部变量表中。
+// dep, pos
+LoadVar(usize, usize),       22     从局部变量表中加载一个变量到栈顶。
+// args个数
+EnterScope(usize),           23     进入一个新的作用域。
+LeaveScope,                  24     离开当前作用域。
+MakeClosure,                 25     创建一个闭包。
+// pc_addr, args个数 
+Call(usize, usize),          26     调用一个函数。
+Ret,                         27     从当前函数返回。
+```
 
-PRINT_ITEM = 23     打印栈顶的值。
-PRINT_NEWLINE = 24  打印一个换行符。
 
-POP = 25            弹出栈顶的值。
-UNIOP_NOT = 26      对栈顶的布尔值取反。
-UNIOP_NEG = 27      对栈顶的值取负。
+**测试样例生成的字节码**
 
-STORE_VAR = 28      将栈顶的值存储到局部变量表中。
-LOAD_VAR = 29       从局部变量表中加载一个变量到栈顶。
+```
+0		Call(58, 0)
+1		EnterScope(0)
+2		LoadVar(1, 0)
+3		LoadConst(0)
+4		BinOpEq
+5		JmpFalse(8)
+6		LoadConst(1)
+7		Ret
+8		LoadVar(1, 0)
+9		LoadVar(1, 0)
+10		LoadConst(1)
+11		BinOpSub
+12		Call(1, 1)
+13		BinOpMul
+14		Ret
+15		LeaveScope
+16		EnterScope(0)
+17		LoadVar(1, 0)
+18		LoadConst(2)
+19		BinOpLt
+20		JmpFalse(23)
+21		LoadConst(1)
+22		Ret
+23		LoadVar(1, 0)
+24		LoadConst(1)
+25		BinOpSub
+26		Call(16, 1)
+27		LoadVar(1, 0)
+28		LoadConst(2)
+29		BinOpSub
+30		Call(16, 1)
+31		BinOpAdd
+32		Ret
+33		LeaveScope
+34		EnterScope(0)
+35		LoadConst(0)
+36		StoreVar(0, 0)
+37		LoadVar(0, 0)
+38		LoadConst(10)
+39		BinOpLt
+40		JmpFalse(49)
+41		LoadVar(0, 0)
+42		PrintItem
+43		PrintNewline
+44		LoadVar(0, 0)
+45		LoadConst(1)
+46		BinOpAdd
+47		StoreVar(0, 0)
+48		Jmp(37)
+49		LoadVar(0, 0)
+50		Ret
+51		LeaveScope
+52		EnterScope(0)
+53		LoadVar(1, 0)
+54		LoadVar(1, 1)
+55		BinOpAdd
+56		Ret
+57		LeaveScope
+58		EnterScope(0)
+59		Call(34, 0)
+60		GetInt
+61		StoreVar(0, 0)
+62		LoadVar(0, 0)
+63		Call(1, 1)
+64		StoreVar(0, 1)
+65		LoadVar(0, 1)
+66		PrintItem
+67		PrintNewline
+68		GetInt
+69		StoreVar(0, 2)
+70		LoadVar(0, 2)
+71		Call(16, 1)
+72		PrintItem
+73		PrintNewline
+74		LeaveScope
+```
 
-ENTER_SCOPE = 30    进入一个新的作用域。
-LEAVE_SCOPE = 31    离开当前作用域。
 
-MAKE_CLOSURE = 32   创建一个闭包。
-CALL = 33           调用一个函数。
-RET = 34            从当前函数返回。
+> 26 58 0 23 0 22 1 0 1 0 108 12 8 1 1 27 22 1 0 22 1 0 1 1 101 26 1 1 102 27 24 23 0 22 1 0 1 2 106 12 23 1 1 27 22 1 0 1 1 101 26 16 1 22 1 0 1 2 101 26 16 1 100 27 24 23 0 1 0 21 0 0 22 0 0 1 10 106 12 49 22 0 0 13 14 22 0 0 1 1 100 21 0 0 10 37 22 0 0 27 24 23 0 22 1 0 22 1 1 100 27 24 23 0 26 34 0 15 21 0 0 22 0 0 26 1 1 21 0 1 22 0 1 13 14 15 21 0 2 22 0 2 26 16 1 13 14 24 
+
+
+**虚拟机运行结果**
+
+input
+```
+10
+10
+```
+
+output
+```
+0
+1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+3628800
+10
+89
 ```

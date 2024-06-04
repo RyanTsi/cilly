@@ -1,0 +1,88 @@
+0		Call(58, 0)
+1		EnterScope(0)
+2		LoadVar(1, 0)
+3		LoadConst(0)
+4		BinOpEq
+5		JmpFalse(8)
+6		LoadConst(1)
+7		Ret
+8		LoadVar(1, 0)
+9		LoadVar(1, 0)
+10		LoadConst(1)
+11		BinOpSub
+12		Call(1, 1)
+13		BinOpMul
+14		Ret
+15		LeaveScope
+16		EnterScope(0)
+17		LoadVar(1, 0)
+18		LoadConst(2)
+19		BinOpLt
+20		JmpFalse(23)
+21		LoadConst(1)
+22		Ret
+23		LoadVar(1, 0)
+24		LoadConst(1)
+25		BinOpSub
+26		Call(16, 1)
+27		LoadVar(1, 0)
+28		LoadConst(2)
+29		BinOpSub
+30		Call(16, 1)
+31		BinOpAdd
+32		Ret
+33		LeaveScope
+34		EnterScope(0)
+35		LoadConst(0)
+36		StoreVar(0, 0)
+37		LoadVar(0, 0)
+38		LoadConst(10)
+39		BinOpLt
+40		JmpFalse(49)
+41		LoadVar(0, 0)
+42		PrintItem
+43		PrintNewline
+44		LoadVar(0, 0)
+45		LoadConst(1)
+46		BinOpAdd
+47		StoreVar(0, 0)
+48		Jmp(37)
+49		LoadVar(0, 0)
+50		Ret
+51		LeaveScope
+52		EnterScope(0)
+53		LoadVar(1, 0)
+54		LoadVar(1, 1)
+55		BinOpAdd
+56		Ret
+57		LeaveScope
+58		EnterScope(0)
+59		Call(34, 0)
+60		GetInt
+61		StoreVar(0, 0)
+62		LoadVar(0, 0)
+63		Call(1, 1)
+64		StoreVar(0, 1)
+65		LoadVar(0, 1)
+66		PrintItem
+67		PrintNewline
+68		GetInt
+69		StoreVar(0, 2)
+70		LoadVar(0, 2)
+71		Call(16, 1)
+72		PrintItem
+73		PrintNewline
+74		LeaveScope
+
+0
+1
+2
+3
+4
+5
+6
+7
+8
+9
+3628800
+89

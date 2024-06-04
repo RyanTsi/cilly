@@ -1,52 +1,59 @@
+use std::io;
+
 use crate::error::{Error, Result};
 
 #[derive(Debug, Clone, Copy)]
 pub enum OpCode {
-    LoadConst(i32),             // 1
-    LoadTrue,                   // 2
-    LoadFalse,                  // 3
-    LoadNull,                   // 4
-    LoadGlobal(usize),          // 5
-    StoreGlobal(usize),         // 6
+    LoadConst(i32),             // 1   加载一个常数到栈顶。
+    LoadTrue,                   // 2   加载True到栈顶。
+    LoadFalse,                  // 3   加载False到栈顶。
+    LoadNull,                   // 4   加载NULL到栈顶。
+    LoadGlobal(usize),          // 5   从全局变量中加载一个变量到栈顶。
+    StoreGlobal(usize),         // 6   将栈顶的值储存到全局变量表中。
 
-    BinOpAdd,                   // 100
-    BinOpSub,                   // 101
-    BinOpMul,                   // 102
-    BinOpDiv,                   // 103
-    BinOpGt,                    // 104
-    BinOpGe,                    // 105
-    BinOpLt,                    // 106
-    BinOpLe,                    // 107
-    BinOpEq,                    // 108
-    BinOpNe,                    // 109
-    BinOpOr,                    // 110
-    BinOpAnd,                   // 111
+    BinOpAdd,                   // 100 栈顶两个值相加。 
+    BinOpSub,                   // 101 栈顶两个值相减。
+    BinOpMul,                   // 102 栈顶两个值相乘。
+    BinOpDiv,                   // 103 栈顶两个值相除。
+    BinOpGt,                    // 104 比较栈顶两个值，大于则结果为true。
+    BinOpGe,                    // 105 比较栈顶两个值，大于等于则结果为true。
+    BinOpLt,                    // 106 比较栈顶两个值，小于则结果为true。
+    BinOpLe,                    // 107 比较栈顶两个值，小于等于则结果为true。
+    BinOpEq,                    // 108 比较栈顶两个值，相等则结果为true。
+    BinOpNe,                    // 109 比较栈顶两个值，不相等则结果为true。
+    BinOpOr,                    // 110 栈顶两个值或。
+    BinOpAnd,                   // 111 栈顶两个值与。
     // 跳转的地址
-    Jmp(usize),                 // 10
-    JmpTrue(usize),             // 11
-    JmpFalse(usize),            // 12
+    Jmp(usize),                 // 10  无条件跳转到指定位置。
+    JmpTrue(usize),             // 11  如果栈顶值为true，跳转到指定位置。
+    JmpFalse(usize),            // 12  如果栈顶值为false，跳转到指定位置。
     
-    PrintItem,                  // 13
-    PrintNewline,               // 14
-    Pop,                        // 15
-    UniOpNot,                   // 16
-    UniOpNeg,                   // 17
+    PrintItem,                  // 13  打印栈顶的值。
+    PrintNewline,               // 14  打印一个换行符。
+    GetInt,                     // 15  输入一个整数
+    Pop,                        // 16  弹出栈顶值
+    UniOpNot,                   // 17  对栈顶的布尔值取反。
+    UniOpNeg,                   // 18  对栈顶的值取负。
+    StorePC,                    // 19  存储当前 PC。
+    LoadPC,                     // 20  从 PC 栈中加载。
     // dep, pos
-    StoreVar(usize, usize),     // 18
+    StoreVar(usize, usize),     // 21  将栈顶的值存储到局部变量表中。
     // dep, pos
-    LoadVar(usize, usize),      // 19
+    LoadVar(usize, usize),      // 22  从局部变量表中加载一个变量到栈顶。
     // args个数
-    EnterScope(usize),          // 20
-    LeaveScope,                 // 21
-    MakeClosure,                // 22
+    EnterScope(usize),          // 23  进入一个新的作用域。
+    LeaveScope,                 // 24  离开当前作用域。
+    MakeClosure,                // 25  创建一个闭包。
     // pc_addr, args个数 
-    Call(usize, usize),         // 23
-    Ret,                        // 24
+    Call(usize, usize),         // 26  调用一个函数。
+    Ret,                        // 27  从当前函数返回。
 }
 
+#[derive(Debug)]
 pub struct VM {
     stack: Vec<i32>,
-    scpoes: Vec<Vec<i32>>,  // 参数 | Local 变量
+    scpoes: Vec<Vec<i32>>,
+    pc_stack: Vec<(usize, usize)>,
     pc: usize,
     code: Vec<OpCode>
 }
@@ -56,12 +63,19 @@ impl VM {
         Self {
             stack: Vec::new(),
             scpoes: vec![Vec::new()],
+            pc_stack: Vec::new(),
             pc: 0,
             code,
         }
     }
+    fn del_addone(&mut self) {
+        if let Some((c, _)) = self.pc_stack.last_mut() {
+            *c += 1;
+        }
+    }
     pub fn run(&mut self) -> Result<()> {
         while self.pc < self.code.len() {
+            // print!("stack: {:?}\nscpoes: {:?}\npc_stack: {:?}\npc: {}\n\n", &self.stack, &self.scpoes, &self.pc_stack, &self.pc);
             let index = self.code[self.pc];
             self.pc += 1;
             match index {
@@ -82,7 +96,6 @@ impl VM {
                 },
                 OpCode::StoreGlobal(pos) => {
                     let v = self.pop();
-                    // println!("!!{v}");
                     while self.scpoes[0].len() < pos + 1 {
                         self.scpoes[0].push(0);
                     }
@@ -135,7 +148,7 @@ impl VM {
                 },
                 OpCode::JmpFalse(next) => {
                     let condition = self.pop();
-                    if condition == 1 {
+                    if condition != 1 {
                         self.pc = next;
                     }
                 },
@@ -146,6 +159,12 @@ impl VM {
                 OpCode::PrintNewline => {
                     println!("");
                 },
+                OpCode::GetInt => {
+                    let mut input = String::new();
+                    io::stdin().read_line(&mut input).unwrap();
+                    let input: i32 = input.trim().parse().unwrap();
+                    self.stack.push(input);
+                }
                 OpCode::Pop => {
                     self.pop();
                 },
@@ -159,17 +178,22 @@ impl VM {
                 },
                 OpCode::StoreVar(scope_i, pos) => {
                     let v = self.pop();
-                    while self.scpoes[scope_i].len() - 1 < pos {
+                    let totle = self.scpoes.len();
+                    let scope_i = totle - scope_i - 1;
+                    while self.scpoes[scope_i].len() < pos + 1 {
                         self.scpoes[scope_i].push(0);
                     }
                     self.scpoes[scope_i][pos] = v;
                 },
                 OpCode::LoadVar(scope_i, pos) => {
+                    let totle = self.scpoes.len();
+                    let scope_i = totle - scope_i - 1;
                     let v = self.scpoes[scope_i][pos];
                     self.push(v);
                 },
                 OpCode::EnterScope(sz) => {
                     self.enter_scope(sz);
+                    self.del_addone();
                 },
                 OpCode::LeaveScope => {
                     self.leave_scope();
@@ -181,11 +205,28 @@ impl VM {
                         let v = self.pop();
                         self.scpoes.last_mut().unwrap()[i] = v;
                     }
+                    self.pc_stack.push((0, self.pc));
                     self.pc = next;
                 },
                 OpCode::Ret => {
                     self.leave_scope();
-                    self.pc = self.pop() as usize;
+                    let (mut dep, pc) = self.pc_stack.pop().unwrap();
+                    self.pc = pc;
+                    while dep > 0 {
+                        self.leave_scope();
+                        dep -= 1;
+                    }
+                },
+                OpCode::StorePC => {
+                    self.pc_stack.push((0, self.pc));
+                },
+                OpCode::LoadPC => {
+                    let (mut dep, pc) = self.pc_stack.pop().unwrap();
+                    self.pc = pc;
+                    while dep > 0 {
+                        self.leave_scope();
+                        dep -= 1;
+                    }
                 },
             }
         }
@@ -204,8 +245,8 @@ impl VM {
         self.stack.pop().unwrap()
     }
     fn binop(&mut self, op: OpCode) -> Result<()>{
-        let v1 = self.pop();
         let v2 = self.pop();
+        let v1 = self.pop();
         let mut v = None;
         match op {
             OpCode::BinOpAdd => {

@@ -1,4 +1,5 @@
 use cilly::ast::{Block, FuncDef, FuncFParam, FuncFParams};
+use cilly::bytecode_translation::translate::{translate_from, translate_to};
 use cilly::bytecode_translation::TransByteCode;
 use cilly::error::{Error, Result};
 use cilly::interpreter::environment::Environment;
@@ -6,7 +7,7 @@ use cilly::interpreter::Execute;
 use cilly::vm::VM;
 use lalrpop_util::lalrpop_mod;
 use std::env::args;
-use std::fs::read_to_string;
+use std::fs::{read_to_string, File};
 use std::io::{self, Write};
 
 // 引用 lalrpop 生成的解析器
@@ -37,35 +38,6 @@ fn main() -> Result<()> {
     env.new_func("getint", &getintfunc)?;
 
     match mode.as_str() {
-        "--inter" => {
-            loop {
-                print!(">>> ");
-                io::stdout().flush()?;
-                let mut input = String::new();
-                io::stdin().read_line(&mut input)?;
-                match input.trim() {
-                    "exit" => break,
-                    ""     => continue,
-                    _      => {
-                        let mut env = Environment::new();
-                        env.new_func("print", &printfunc)?;
-                        env.new_func("getint", &getintfunc)?;
-                        match cy::BlockItemParser::new().parse(&input) {
-                            Ok(ast) => {
-                                if let Err(e) = ast.run(&mut env) {
-                                    println!("Error {:?}", e);
-                                    continue;
-                                }
-                            }
-                            Err(e) => {
-                                println!("Error: {:?}", e);
-                                continue;
-                            }
-                        }
-                    }
-                }
-            }
-        },
         "--static" => {
             let input = args.next().unwrap();
             // 读取输入文件
@@ -75,15 +47,27 @@ fn main() -> Result<()> {
             ast.run(&mut env)?;
         },
         "--translate" => {
-            let mut ast = cy::CompUnitParser::new().parse(testcode1()).unwrap();
+            let filename = args.next().unwrap();
+            // 读取输入文件
+            let input = read_to_string(&filename)?;
+            // 调用 lalrpop 生成的 parser 解析输入文件
+            let mut ast = cy::CompUnitParser::new().parse(&input).unwrap();
             let res = ast.translate_byte(&mut cilly::bytecode_translation::environment::Environment::new(), 0)?;
-            let mut id = 0;
-            // println!("{:?}", ast);
+            let res = translate_to(res);
+            let filename = filename.replace(".cil", ".class");
+            let mut file = File::create(&filename)?;
+            
             for i in &res {
-                println!("{}\t\t{:?}",id, i);
-                id += 1;
+                file.write(format!("{} ",i).as_bytes()).unwrap();
             }
-            let mut vm = VM::new(res.clone());
+        },
+        "--vmrun" => {
+            let input = args.next().unwrap();
+            // 读取输入文件
+            let input = read_to_string(input)?;
+            let code: Vec<usize> = input.split_whitespace().map(|s| s.parse().unwrap()).collect();
+            let code = translate_from(code);
+            let mut vm = VM::new(code);
             vm.run()?;
         }
         _ => return Err(Error::UnExpectArgs),
@@ -103,6 +87,59 @@ fn main() -> Result<()> {
 
 fn testcode1() -> &'static str {
     r#"
+    var a: i32 = 10;
+    fn fact(n: i32) -> i32 {
+        if(n == 0) return 1;
+        return n * fact(n - 1);
+    }
+    
+    fn feb(n: i32) -> i32 {
+        if(n < 2) {
+            return 1;
+        } else {
+            return feb(n - 1) + feb(n - 2);
+        }
+    }
+    
+    fn while_test(n: i32) -> i32 {
+        var i: i32 = 0;
+        var res: i32 = 0;
+        while(i < 10) {
+            res = res + i;
+            i = i + 1;
+        }
+        return res;
+    }
+    
+    fn add(a: i32, b: i32) -> i32 {
+        return a + b;
+    }
+    
+    fn main () {
+        print(a);
+        print(add(100, 100));
+        
+        val x: i32 = getint();
+        print(while_test(x));
+        
+        val n: i32 = getint();
+        val res: i32 = fact(n);
+        print(res);
+        
+        val m: i32 = getint();
+        print(feb(m));
+    }
+    "#
+}
+
+fn testcode2() -> &'static str {
+    r#"
+var a: i32 = 10;
+fn fact(n: i32) -> i32 {
+    if(n == 0) return 1;
+    return n * fact(n - 1);
+}
+
 fn feb(n: i32) -> i32 {
     if(n < 2) {
         return 1;
@@ -110,22 +147,17 @@ fn feb(n: i32) -> i32 {
         return feb(n - 1) + feb(n - 2);
     }
 }
-fn main () {
-    val res: i32 = feb(10);
-    print(res);
-}
-    "#
-}
 
-fn testcode2() -> &'static str {
-    r#"
-var a: i32 = 0;
-fn main() {
-    while(a < 10) {
-        a = a + 1;
-        continue;
-    }
+
+
+fn main () {
     print(a);
+    var n: i32 = getint();
+    var res: i32 = fact(n);
+    print(res);
+    print(while_test(n));
+    val m: i32 = getint();
+    print(feb(m));
 }
     "#
 }

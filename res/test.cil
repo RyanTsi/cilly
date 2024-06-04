@@ -3,7 +3,6 @@ fn fact(n: i32) -> i32 {
     return n * fact(n - 1);
 }
 
-var a: i32 = 10;
 fn feb(n: i32) -> i32 {
     if(n < 2) {
         return 1;
@@ -12,14 +11,13 @@ fn feb(n: i32) -> i32 {
     }
 }
 
-fn while_test(n: i32) -> i32 {
-    var i: i32 = 0;
-    var res: i32 = 0;
-    while(i < 10) {
-        res = res + i;
-        i = i + 1;
+fn while_test() -> i32 {
+    var n: i32 = 0;
+    while(n < 10) {
+        print(n);
+        n = n + 1;
     }
-    return res;
+    return n;
 }
 
 fn add(a: i32, b: i32) -> i32 {
@@ -27,17 +25,11 @@ fn add(a: i32, b: i32) -> i32 {
 }
 
 fn main () {
-    print(a);
-    print(add(100, 100));
-    
-    val x: i32 = getint();
-    print(while_test(x));
-    
+    while_test();
     val n: i32 = getint();
     val res: i32 = fact(n);
     print(res);
     
     val m: i32 = getint();
     print(feb(m));
-    return 0;
 }
