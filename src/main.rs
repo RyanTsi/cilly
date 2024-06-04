@@ -54,12 +54,12 @@ fn main() -> Result<()> {
             let mut ast = cy::CompUnitParser::new().parse(&input).unwrap();
             let res = ast.translate_byte(&mut cilly::bytecode_translation::environment::Environment::new(), 0)?;
             let res = translate_to(res);
-            let filename = filename.replace(".cil", ".class");
+            let filename = filename.replace(".cil", ".cby");
             let mut file = File::create(&filename)?;
-            
             for i in &res {
                 file.write(format!("{} ",i).as_bytes()).unwrap();
             }
+            println!("{} is created !", filename);
         },
         "--vmrun" => {
             let input = args.next().unwrap();

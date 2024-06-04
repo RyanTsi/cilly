@@ -306,3 +306,15 @@ output
 10
 89
 ```
+
+### 过程截图：
+
+解释器
+![图1](doc/image1.png)
+
+转化成字节码
+![图2](doc/image2.png)
+![图3](doc/image3.png)
+
+虚拟机运行字节码
+![图4](doc/image4.png)
